@@ -1,0 +1,245 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   1. BRAND COLOR — THE ONLY BLOCK YOU EDIT TO RE-BRAND THE ENTIRE SITE
+   ----------------------------------------------------------------------------
+   Nothing below hard-codes a brand hex. Every button, link, header, badge and
+   focus ring resolves through --brand-*. Swap these 11 values and the whole
+   site re-brands, including the OG images and the theme-color meta tag.
+
+   Current value is a DELIBERATE PLACEHOLDER: a deep alpine slate-teal. It is
+   desaturated on purpose — it reads "established transit operator", it is
+   distinct from Roam's forest green (#0e6750) and Moraine Lake Bus Company's
+   teal (#275151), and it does not pre-commit the final brand decision.
+
+   Ready-to-paste alternates live in docs/BRAND.md.
+   ========================================================================== */
+:root {
+  --brand-50: #f0f6f7;
+  --brand-100: #dae9ec;
+  --brand-200: #b8d4da;
+  --brand-300: #8bb6c1;
+  --brand-400: #5a91a1;
+  --brand-500: #3e7486;
+  --brand-600: #345e71;
+  --brand-700: #2f4e5d;
+  --brand-800: #2c414e;
+  --brand-900: #283843;
+  --brand-950: #16242d;
+
+  /* Accent — used sparingly for primary CTAs so they never blend into the
+     brand field. Also swappable; keep AA contrast against --ink. */
+  --accent-400: #f5c451;
+  --accent-500: #edaf24;
+  --accent-600: #d29310;
+  --accent-700: #a76f0f;
+}
+
+/* ============================================================================
+   2. TRANSIT STATUS SCALE — semantic, never decorative
+   ----------------------------------------------------------------------------
+   These follow the conventions riders already read on transit displays.
+   They are intentionally NOT derived from the brand color, so they keep
+   meaning after a re-brand.
+   ========================================================================== */
+:root {
+  --status-ontime: #157f4a; /* green  — on schedule / seats available */
+  --status-ontime-bg: #e7f4ec;
+  --status-ontime-ink: #0d5b34;
+
+  --status-delay: #a86a06; /* amber  — delayed / filling up */
+  --status-delay-bg: #fdf3e0;
+  --status-delay-ink: #7c4d04;
+
+  --status-issue: #c02a1f; /* red    — cancelled / sold out */
+  --status-issue-bg: #fdeceb;
+  --status-issue-ink: #8f1f17;
+
+  --status-info: #1f5fa8; /* blue   — advisory / detour */
+  --status-info-bg: #eaf2fb;
+  --status-info-ink: #17477e;
+}
+
+/* ============================================================================
+   3. SURFACE & INK — warm neutrals, borrowed from the paper-white that reads
+   as trustworthy on every transit site we benchmarked (Roam #f5f4f2).
+   ========================================================================== */
+:root {
+  --paper: #ffffff;
+  --paper-sunken: #f6f5f3;
+  --paper-raised: #ffffff;
+  --ink: #16181c;
+  --ink-muted: #5a6069;
+  --ink-subtle: #7c838d;
+  --line: #e3e2df;
+  --line-strong: #cfcecb;
+
+  --radius: 0.625rem;
+  --shadow-card: 0 1px 2px rgb(22 24 28 / 0.05), 0 4px 16px -8px rgb(22 24 28 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(22 24 28 / 0.06), 0 12px 32px -12px rgb(22 24 28 / 0.22);
+}
+
+/* ============================================================================
+   4. TAILWIND THEME BINDING
+   ========================================================================== */
+@theme inline {
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-950: var(--brand-950);
+
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+
+  --color-ontime: var(--status-ontime);
+  --color-ontime-bg: var(--status-ontime-bg);
+  --color-ontime-ink: var(--status-ontime-ink);
+  --color-delay: var(--status-delay);
+  --color-delay-bg: var(--status-delay-bg);
+  --color-delay-ink: var(--status-delay-ink);
+  --color-issue: var(--status-issue);
+  --color-issue-bg: var(--status-issue-bg);
+  --color-issue-ink: var(--status-issue-ink);
+  --color-info: var(--status-info);
+  --color-info-bg: var(--status-info-bg);
+  --color-info-ink: var(--status-info-ink);
+
+  --color-paper: var(--paper);
+  --color-sunken: var(--paper-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
+
+  --radius-card: var(--radius);
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+}
+
+/* ============================================================================
+   5. BASE
+   ========================================================================== */
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* One visible, consistent focus treatment. Conversion killer if missing. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Native date/time inputs should not look like a different product. */
+  input[type="date"],
+  input[type="time"] {
+    font-family: inherit;
+  }
+}
+
+/* ============================================================================
+   6. UTILITIES
+   ========================================================================== */
+@layer utilities {
+  .container-page {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Keeps the hero headline legible over any photograph without a heavy
+     scrim washing out the mountains. */
+  .text-on-photo {
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 32px rgb(0 0 0 / 0.4);
+  }
+
+  /* Two-axis scrim: vertical for overall legibility, horizontal so the
+     left-aligned headline sits on the darkest part of the frame while the
+     right side keeps its dawn colour. */
+  .scrim-photo {
+    background:
+      linear-gradient(
+        to right,
+        rgb(8 14 18 / 0.72) 0%,
+        rgb(8 14 18 / 0.42) 45%,
+        rgb(8 14 18 / 0.12) 100%
+      ),
+      linear-gradient(
+        to bottom,
+        rgb(8 14 18 / 0.42) 0%,
+        rgb(8 14 18 / 0.14) 38%,
+        rgb(8 14 18 / 0.5) 100%
+      );
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
