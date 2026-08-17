@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
-import { site } from "@/config/site";
+import { site, isProductionDeploy } from "@/config/site";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { StickyBookBar } from "@/components/layout/sticky-book-bar";
@@ -66,11 +66,19 @@ export const metadata: Metadata = {
     description:
       "Departures every 15–30 minutes to Moraine Lake and Lake Louise. Seats released daily.",
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
-  },
+  /* Preview deployments must never be indexed — see `isProductionDeploy`. */
+  robots: isProductionDeploy
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      }
+    : { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

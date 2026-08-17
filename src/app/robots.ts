@@ -1,7 +1,13 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/config/site";
+import { site, isProductionDeploy } from "@/config/site";
 
 export default function robots(): MetadataRoute.Robots {
+  /* Preview deployments get a blanket disallow to match their noindex tag.
+     Belt and braces: the meta tag stops indexing, this stops crawling. */
+  if (!isProductionDeploy) {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
+
   return {
     rules: [
       {

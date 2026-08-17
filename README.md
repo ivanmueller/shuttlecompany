@@ -112,6 +112,65 @@ DOM for crawlers and find-in-page works; every interactive element has a
 visible focus ring; status is never conveyed by colour alone; `prefers-reduced-motion`
 is honoured.
 
+## Deploying
+
+Hosted on **Vercel**, with DNS on **Cloudflare**.
+
+### First deploy
+
+1. [vercel.com/new](https://vercel.com/new) → import `ivanmueller/shuttlecompany`.
+2. Change nothing. Vercel detects Next.js and the defaults are correct.
+3. Deploy. You get a live `*.vercel.app` URL in about two minutes.
+
+Every push to `main` redeploys production. **Every branch and every pull
+request gets its own preview URL**, which is the fastest way to review a
+change before it goes live.
+
+### Attaching a subdomain
+
+In Vercel: **Project → Settings → Domains → Add**, enter e.g.
+`shuttle.yourdomain.com`. Vercel shows you a DNS record to create.
+
+In Cloudflare DNS, add that record — normally:
+
+| Type | Name | Target | Proxy |
+| --- | --- | --- | --- |
+| CNAME | `shuttle` | `cname.vercel-dns.com` | **DNS only** |
+
+> **The proxy must be off.** Cloudflare's orange cloud in front of Vercel
+> causes SSL handshake failures or redirect loops, and it is the single most
+> common reason a Vercel custom domain never goes green. Click the orange
+> cloud so it turns grey. Certificates issue within a minute or two.
+
+Then set the canonical URL so metadata, the sitemap and the structured data
+all point at the real domain — **Settings → Environment Variables**:
+
+```
+NEXT_PUBLIC_SITE_URL = https://shuttle.yourdomain.com
+```
+
+Redeploy for it to take effect. Until you set it, the site falls back to the
+Vercel production domain automatically, so canonicals are never wrong — just
+not yet on your domain.
+
+### What is already handled
+
+- **Preview deploys are `noindex` and `Disallow: /`.** Vercel preview URLs are
+  routinely discovered and indexed, which would put duplicate copies of the
+  keyword pages in the index and compete with the real site. Both the meta tag
+  and robots.txt switch automatically on `NEXT_PUBLIC_VERCEL_ENV`.
+- **ISR.** The home page revalidates every 10 minutes, route pages every 10,
+  service status every 5. The departure board and seat availability stay
+  current without a rebuild.
+- **Response headers** are declared in `next.config.ts`.
+
+### Not GitHub Pages
+
+This was briefly configured for static export and reverted. A static host
+cannot do incremental revalidation — the "live" departure board would freeze
+at build time — and cannot process a payment server-side. `next.config.ts`
+documents the exact changes if a static host is ever required.
+
 ## Before you launch
 
 This is a complete, working front end. These things are **not** done and
