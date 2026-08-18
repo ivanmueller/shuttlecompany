@@ -7,32 +7,55 @@
    focus ring resolves through --brand-*. Swap these 11 values and the whole
    site re-brands, including the OG images and the theme-color meta tag.
 
-   Current value is a DELIBERATE PLACEHOLDER: a deep alpine slate-teal. It is
-   desaturated on purpose — it reads "established transit operator", it is
-   distinct from Roam's forest green (#0e6750) and Moraine Lake Bus Company's
-   teal (#275151), and it does not pre-commit the final brand decision.
+   ALPINE BLUE. Chosen, not placeholder. Three reasons, in order of weight:
 
-   Ready-to-paste alternates live in docs/BRAND.md.
+   1. Blue is what a public transit operator looks like. Every rider arriving
+      here has already been told "no" by Parks Canada and is asking whether we
+      are a real scheduled service or another tour bus. Blue is the sector's
+      default — BC Transit, TransLink, Greyhound, Amtrak, Ember — and it does
+      that positioning work before a single word is read.
+   2. It is the only strong colour left in this market. Roam is forest green
+      (#0e6750), Moraine Lake Bus Company is teal (#275151), Parks Canada is
+      federal green. In a maps pin cluster, a SERP favicon row or a hotel
+      lobby rack card, deep blue is the one that separates.
+   3. It frames photography instead of competing with it. Real Rockies imagery
+      is glacial turquoise water and blue-green spruce; a green or teal brand
+      fights both and reads as a washed-out copy of the lake the visitor came
+      to see. Navy sits behind the frame and lets the water be the hero.
+
+   Built in OKLCH so the ramp is perceptually even, then hand-checked against
+   every contrast pair the components actually render (see docs/BRAND.md).
+   Chroma is deliberately held at the dark end — the previous placeholder let
+   it collapse to 0.026 by --brand-950, which is why the hero, the footer and
+   the comparison header all rendered as grey rather than as a brand.
    ========================================================================== */
 :root {
-  --brand-50: #f0f6f7;
-  --brand-100: #dae9ec;
-  --brand-200: #b8d4da;
-  --brand-300: #8bb6c1;
-  --brand-400: #5a91a1;
-  --brand-500: #3e7486;
-  --brand-600: #345e71;
-  --brand-700: #2f4e5d;
-  --brand-800: #2c414e;
-  --brand-900: #283843;
-  --brand-950: #16242d;
+  --brand-50: #eef8ff;
+  --brand-100: #d8edfe;
+  --brand-200: #b2d8fa;
+  --brand-300: #84bcef;
+  --brand-400: #4d92d3;
+  --brand-500: #307ac2;
+  --brand-600: #1b63ac;
+  --brand-700: #104f95;
+  --brand-800: #0c3e7a;
+  --brand-900: #092e5e;
+  --brand-950: #051b3c;
 
-  /* Accent — used sparingly for primary CTAs so they never blend into the
-     brand field. Also swappable; keep AA contrast against --ink. */
-  --accent-400: #f5c451;
-  --accent-500: #edaf24;
-  --accent-600: #d29310;
-  --accent-700: #a76f0f;
+  /* LARCH GOLD — the CTA accent, and the only warm colour in the system.
+     Deliberately NOT derived from the brand ramp: a primary button in the
+     brand colour disappears the moment it sits inside a brand-coloured
+     section. Gold is also the exact perceptual complement of this blue
+     (OKLCH hue 84 against 255), which is why it carries the most attention
+     per square pixel of any option, and it is locally true — the larches
+     above Moraine Lake turn gold in the last month of the season.
+
+     Hue is held steady across the ramp. The previous accent slid from 85 to
+     73 and its dark end landed on top of the amber "delay" status. */
+  --accent-400: #f8c34b;
+  --accent-500: #ecb121;
+  --accent-600: #cb9317;
+  --accent-700: #9c6c18;
 }
 
 /* ============================================================================
@@ -41,49 +64,105 @@
    These follow the conventions riders already read on transit displays.
    They are intentionally NOT derived from the brand color, so they keep
    meaning after a re-brand.
+
+   Each is one family: a saturated base (the dot), a dark ink (the label) and
+   a pale tint (the field). Every -ink clears 4.5:1 on both its own tint and
+   on paper; every dot clears 3:1 on its tint.
+
+   Two hues moved when the brand became blue:
+     · advisory left blue for indigo. On a blue-brand site a blue notice reads
+       as brand furniture rather than as a notice, and its pale tint was
+       indistinguishable from an ordinary --brand-50 panel.
+     · delay moved off 69 so it no longer sits on the gold accent. It is still
+       amber, and it is still separated from "issue" red by 45 degrees.
    ========================================================================== */
 :root {
-  --status-ontime: #157f4a; /* green  — on schedule / seats available */
-  --status-ontime-bg: #e7f4ec;
-  --status-ontime-ink: #0d5b34;
+  --status-ontime: #067e3f; /* green  — on schedule / seats available */
+  --status-ontime-bg: #e5f5e8;
+  --status-ontime-ink: #005a29;
 
-  --status-delay: #a86a06; /* amber  — delayed / filling up */
-  --status-delay-bg: #fdf3e0;
-  --status-delay-ink: #7c4d04;
+  --status-delay: #995700; /* amber  — delayed / filling up */
+  --status-delay-bg: #feedd9;
+  --status-delay-ink: #6e3c00;
 
-  --status-issue: #c02a1f; /* red    — cancelled / sold out */
-  --status-issue-bg: #fdeceb;
-  --status-issue-ink: #8f1f17;
+  --status-issue: #be2323; /* red    — cancelled / sold out */
+  --status-issue-bg: #ffeae6;
+  --status-issue-ink: #8b1113;
 
-  --status-info: #1f5fa8; /* blue   — advisory / detour */
-  --status-info-bg: #eaf2fb;
-  --status-info-ink: #17477e;
+  --status-info: #6158bb; /* indigo — advisory / detour / notice */
+  --status-info-bg: #eeefff;
+  --status-info-ink: #443b8b;
+}
+
+/* ----------------------------------------------------------------------------
+   2b. THE SAME FOUR STATES, ON DARK GROUND
+   ----------------------------------------------------------------------------
+   A status dot is only useful if it can be seen. The saturated bases above are
+   tuned against their own pale tints and land at 2.8–3.3:1 on --brand-950,
+   which is the ground under the service banner, the departure board and the
+   hero — i.e. every place a rider actually looks for live state first.
+
+   Redefining the token inside `.on-dark` lifts all four to 5.9–6.8:1 without
+   touching a component, because `@theme inline` compiles `bg-ontime` straight
+   to `var(--status-ontime)`.
+
+   Delay is pushed 14 degrees toward orange here. At the gold end of the ramp
+   it would otherwise sit on --accent-400, and on a navy hero a warning that
+   looks like a call to action is worse than no warning.
+   ========================================================================== */
+.on-dark {
+  --status-ontime: #4fb772;
+  --status-delay: #e2832d;
+  --status-issue: #ff655a;
+  --status-info: #948ff7;
+}
+
+/* Pale-tint pills carry their own light field, so a pill nested inside a dark
+   section opts back out — otherwise its dot and border lift against a tint
+   that did not move. */
+.on-dark .status-field {
+  --status-ontime: #067e3f;
+  --status-delay: #995700;
+  --status-issue: #be2323;
+  --status-info: #6158bb;
 }
 
 /* ============================================================================
-   3. SURFACE & INK — warm neutrals, borrowed from the paper-white that reads
-   as trustworthy on every transit site we benchmarked (Roam #f5f4f2).
+   3. SURFACE & INK — warm neutrals against a cool brand.
+   ----------------------------------------------------------------------------
+   The neutrals are warm on purpose. Navy plus warm stone plus gold is the
+   palette every heritage institution and park service converged on, and the
+   warmth is what stops a blue-heavy transit site reading cold and clinical.
    ========================================================================== */
 :root {
   --paper: #ffffff;
-  --paper-sunken: #f6f5f3;
+  --paper-sunken: #f7f5f1;
   --paper-raised: #ffffff;
-  --ink: #16181c;
-  --ink-muted: #5a6069;
-  --ink-subtle: #5f6871; /* 5.4:1 on paper. Was #7c838d — 3.82:1, which
-                            failed WCAG AA on 58 nodes including every label
-                            on the booking form, and is unreadable outdoors. */
-  --line: #e3e2df;
-  --line-strong: #cfcecb;
+  --ink: #15181d;
 
-  --focus-ring: #1d3b47;
-  --focus-halo: rgb(245 196 81 / 0.9);
+  /* Three tiers, and they have to stay three. --ink-muted and --ink-subtle
+     had converged to #5a6069 and #5f6871 — a 0.5:1 difference, i.e. two
+     tokens doing one job and no visible hierarchy between secondary text and
+     captions. Muted is now 7.1:1, subtle 4.9:1. */
+  --ink-muted: #535961;
+  --ink-subtle: #6a7179;
+
+  --line: #e3e2de;
+  /* 3.09:1 on paper. Was #cfcecb — 1.62:1, which is the resting border on
+     every input in the booking flow and fails WCAG 2.2 SC 1.4.11 for a UI
+     component boundary. It is also the single worst thing on this site to
+     get wrong outdoors on a phone in Banff daylight, which is where this
+     form is actually filled in. */
+  --line-strong: #95928f;
+
+  --focus-ring: #092e5e;
+  --focus-halo: rgb(248 195 75 / 0.9);
   --focus-ring-dark: #ffffff;
-  --focus-halo-dark: rgb(20 30 36 / 0.85);
+  --focus-halo-dark: rgb(5 27 60 / 0.85);
 
   --radius: 0.625rem;
-  --shadow-card: 0 1px 2px rgb(22 24 28 / 0.05), 0 4px 16px -8px rgb(22 24 28 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(22 24 28 / 0.06), 0 12px 32px -12px rgb(22 24 28 / 0.22);
+  --shadow-card: 0 1px 2px rgb(9 24 46 / 0.05), 0 4px 16px -8px rgb(9 24 46 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(9 24 46 / 0.06), 0 12px 32px -12px rgb(9 24 46 / 0.24);
 }
 
 /* ============================================================================
@@ -243,15 +322,15 @@
     background:
       linear-gradient(
         to right,
-        rgb(8 14 18 / 0.72) 0%,
-        rgb(8 14 18 / 0.42) 45%,
-        rgb(8 14 18 / 0.12) 100%
+        rgb(4 14 32 / 0.72) 0%,
+        rgb(4 14 32 / 0.42) 45%,
+        rgb(4 14 32 / 0.12) 100%
       ),
       linear-gradient(
         to bottom,
-        rgb(8 14 18 / 0.42) 0%,
-        rgb(8 14 18 / 0.14) 38%,
-        rgb(8 14 18 / 0.5) 100%
+        rgb(4 14 32 / 0.42) 0%,
+        rgb(4 14 32 / 0.14) 38%,
+        rgb(4 14 32 / 0.5) 100%
       );
   }
 
