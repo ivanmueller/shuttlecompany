@@ -1,0 +1,20 @@
+/* Tailwind entry for design-sync.
+ *
+ * The app compiles globals.css through PostCSS at `next build`, so the utility
+ * classes the components reference exist only after a Tailwind pass. This
+ * wrapper imports the repo's real stylesheet unchanged and declares the source
+ * files to scan explicitly, so the compiled output is deterministic rather
+ * than dependent on Tailwind's cwd-relative auto-detection.
+ *
+ * `previews/` is scanned too: authored preview cards use the same utility
+ * vocabulary for their layout glue, so the CSS must be rebuilt after they are
+ * written (that is what `.design-sync/build-css.mjs` is for).
+ */
+@import "../src/app/globals.css";
+
+@source "../src/components/**/*.tsx";
+@source "../src/app/**/*.tsx";
+@source "../src/data/**/*.ts";
+@source "../src/config/**/*.ts";
+@source "./previews/**/*.tsx";
+@source "./shims/**/*.tsx";
