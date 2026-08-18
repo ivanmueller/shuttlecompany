@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   routes,
   stops,
   stopById,
   findRoutes,
   getDepartures,
-  destinationsFrom,
+  planJourneys,
+  reachableStopIds,
   headwayLabel,
   segmentMinutes,
   type Route,
@@ -18,6 +19,8 @@ import {
 import { Button, ButtonLink } from "@/components/ui/button";
 import { SeatsPill, StatusPill } from "@/components/ui/status-pill";
 import { cn, todayISO, addDaysISO, formatCad, formatDateShort } from "@/lib/utils";
+import { bookableRange, firstBookableDate } from "@/lib/season";
+import { track } from "@/lib/analytics";
 import { site } from "@/config/site";
 
 /**
@@ -64,17 +67,49 @@ export function BookingClient() {
   const [destinationId, setDestinationId] = useState(
     params.get("to") ?? presetRoute?.destinationId ?? "moraine-lake",
   );
-  const [date, setDate] = useState(params.get("date") ?? today);
-  const [pax, setPax] = useState<Record<PaxKey, number>>({
-    adult: Math.max(1, Number(params.get("pax") ?? 2)),
-    senior: 0,
-    youth: 0,
-    child: 0,
+  const [date, setDate] = useState(params.get("date") ?? firstBookableDate(today));
+
+  /**
+   * Passenger mix, carried through from the search.
+   *
+   * The old code read a single `pax` count and assigned every traveller to
+   * `adult`, so a family of two adults and two under-sixes arrived here
+   * quoted $116 for a $58 trip. `pax` is still accepted as a fallback for old
+   * links, but it now seeds adults only when no explicit mix is present.
+   */
+  const [pax, setPax] = useState<Record<PaxKey, number>>(() => {
+    const read = (k: string) => {
+      const raw = params.get(k);
+      return raw === null ? null : Math.max(0, Number(raw) || 0);
+    };
+    const explicit = ["adult", "senior", "youth", "child"].some(
+      (k) => params.get(k) !== null,
+    );
+    if (explicit) {
+      return {
+        adult: Math.max(1, read("adult") ?? 1),
+        senior: read("senior") ?? 0,
+        youth: read("youth") ?? 0,
+        child: read("child") ?? 0,
+      };
+    }
+    return { adult: Math.max(1, Number(params.get("pax") ?? 2)), senior: 0, youth: 0, child: 0 };
   });
-  const [selection, setSelection] = useState<Selection | null>(null);
+
+  /**
+   * Departure preselected from the board.
+   *
+   * Board rows link with `?time=HH:MM`; this component used to ignore it
+   * entirely, so tapping "2:40 pm" landed the visitor on forty-one unfiltered
+   * times with nothing chosen — converting a completed decision back into an
+   * open question.
+   */
+  const presetTime = params.get("time");
+  const [chosen, setChosen] = useState<Selection | null>(null);
+  const [ignorePreset, setIgnorePreset] = useState(false);
 
   const destinationOptions = useMemo(() => {
-    const allowed = new Set(destinationsFrom(originId));
+    const allowed = new Set(reachableStopIds(originId));
     return stops.filter((s) => allowed.has(s.id));
   }, [originId]);
 
@@ -97,6 +132,41 @@ export function BookingClient() {
         .sort((a, b) => a.departure.minutes - b.departure.minutes),
     [matches, date],
   );
+
+  /**
+   * The departure preselected by a board row, derived rather than pushed into
+   * state by an effect. It is superseded the moment the visitor picks
+   * anything, and dropped once they change the search.
+   */
+  const presetMatch = useMemo(() => {
+    if (!presetTime || ignorePreset) return null;
+    const hit = results.find((r) => r.departure.time === presetTime);
+    return hit ? { route: hit.route, departure: hit.departure } : null;
+  }, [presetTime, ignorePreset, results]);
+
+  const selection = chosen ?? presetMatch;
+
+  /**
+   * Sold-out impressions.
+   *
+   * This does not measure the funnel — it tells you which departures to add
+   * buses to, which is the actual business decision behind the whole
+   * enterprise. Reporting to an external system is exactly what an effect is
+   * for; nothing here touches React state.
+   */
+  const soldOut = useMemo(
+    () => results.filter((r) => r.departure.availability === "sold-out"),
+    [results],
+  );
+  const soldOutKey = soldOut.map((r) => `${r.route.slug}@${r.departure.time}`).join(",");
+
+  useEffect(() => {
+    if (!soldOutKey) return;
+    for (const item of soldOutKey.split(",")) {
+      const [slug, time] = item.split("@");
+      track({ name: "sold_out_seen", route: slug, time, date });
+    }
+  }, [soldOutKey, date]);
 
   /**
    * Grouped by time of day.
@@ -135,9 +205,13 @@ export function BookingClient() {
 
   const handleOriginChange = (next: string) => {
     setOriginId(next);
-    setSelection(null);
-    const allowed = destinationsFrom(next);
-    if (!allowed.includes(destinationId)) setDestinationId(allowed[0] ?? "");
+    setChosen(null);
+                setIgnorePreset(true);
+    if (planJourneys(next, destinationId).length === 0) {
+      const allowed = reachableStopIds(next);
+      setDestinationId(allowed.includes("moraine-lake") ? "moraine-lake" : (allowed[0] ?? ""));
+    }
+    track({ name: "origin_switched", to: next });
   };
 
   const proceed = () => {
@@ -153,11 +227,20 @@ export function BookingClient() {
       youth: String(pax.youth),
       child: String(pax.child),
     });
+    track({
+      name: "checkout_started",
+      route: selection.route.slug,
+      fareTotal: subtotal,
+      adults: pax.adult,
+      seniors: pax.senior,
+      youth: pax.youth,
+      children: pax.child,
+    });
     router.push(`/book/checkout?${qs.toString()}`);
   };
 
   const fieldClasses =
-    "h-11 w-full rounded-[var(--radius)] border border-line-strong bg-paper px-3 text-[0.9375rem] font-medium text-ink hover:border-brand-400 focus:border-brand-600";
+    "h-11 w-full rounded-[var(--radius)] border border-line-strong bg-paper px-3 text-base font-medium text-ink hover:border-brand-400 focus:border-brand-600";
   const labelClasses =
     "mb-1.5 block text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle";
 
@@ -192,7 +275,8 @@ export function BookingClient() {
               value={destinationId}
               onChange={(e) => {
                 setDestinationId(e.target.value);
-                setSelection(null);
+                setChosen(null);
+                setIgnorePreset(true);
               }}
               className={fieldClasses}
             >
@@ -211,26 +295,32 @@ export function BookingClient() {
               id="bk-date"
               type="date"
               value={date}
-              min={today}
-              max={addDaysISO(today, 365)}
+              min={bookableRange(today).min}
+              max={bookableRange(today).max}
               onChange={(e) => {
                 setDate(e.target.value);
-                setSelection(null);
+                setChosen(null);
+                setIgnorePreset(true);
               }}
               className={fieldClasses}
             />
           </div>
         </div>
 
-        {/* Quick date shuttle — booking a day either side is one tap. */}
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-          {Array.from({ length: 7 }, (_, i) => addDaysISO(today, i)).map((d) => (
+        {/* Quick date shuttle — booking a day either side is one tap.
+            `min-w-0` matters: without it the shrink-0 chips pushed the whole
+            page 6px wider than the viewport on a phone. */}
+        <div className="mt-3 flex min-w-0 items-center gap-2 overflow-x-auto hide-scrollbar">
+          {Array.from({ length: 7 }, (_, i) => addDaysISO(today, i))
+            .filter((d) => d >= bookableRange(today).min && d <= bookableRange(today).max)
+            .map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => {
                 setDate(d);
-                setSelection(null);
+                setChosen(null);
+                setIgnorePreset(true);
               }}
               aria-pressed={date === d}
               className={cn(
@@ -308,7 +398,7 @@ export function BookingClient() {
                       <button
                         type="button"
                         disabled={soldOut || notEnough}
-                        onClick={() => setSelection({ route, departure })}
+                        onClick={() => setChosen({ route, departure })}
                         aria-pressed={active}
                         className={cn(
                           "flex w-full items-center gap-4 rounded-[var(--radius)] border p-4 text-left transition-all",
@@ -342,8 +432,8 @@ export function BookingClient() {
                           </span>
                           <span className="mt-1.5 flex flex-wrap items-center gap-2">
                             <SeatsPill
+                              availability={departure.availability}
                               seats={departure.seatsRemaining}
-                              capacity={route.capacity}
                             />
                             {notEnough && (
                               <StatusPill

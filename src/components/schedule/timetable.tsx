@@ -77,7 +77,7 @@ export function Timetable({
                     {d.arrivalLabel}
                   </td>
                   <td className="px-4 py-3">
-                    <SeatsPill seats={d.seatsRemaining} capacity={route.capacity} />
+                    <SeatsPill availability={d.availability} seats={d.seatsRemaining} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     {full ? (

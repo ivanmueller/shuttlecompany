@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { routes, stopById, formatMinutesLabel } from "@/data/network";
 import { Button } from "@/components/ui/button";
 import { formatCad, formatDateLong, cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import { site } from "@/config/site";
 
 /**
@@ -89,13 +90,17 @@ export function CheckoutClient() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    /* Funnel shape only. `booking_confirmed` must be emitted server-side from
+       the payment webhook — client-side revenue events are wrong by 10–30%
+       from blockers alone. */
+    track({ name: "payment_submitted", route: route.slug, fareTotal: total });
     /* Stand-in for the payment call. See the note at the top of this file. */
     const qs = new URLSearchParams({ route: route.slug, date, time, email });
     setTimeout(() => router.push(`/book/confirmed?${qs.toString()}`), 700);
   };
 
   const fieldClasses =
-    "h-11 w-full rounded-[var(--radius)] border border-line-strong bg-paper px-3 text-[0.9375rem] text-ink placeholder:text-ink-subtle hover:border-brand-400 focus:border-brand-600";
+    "h-11 w-full rounded-[var(--radius)] border border-line-strong bg-paper px-3 text-base text-ink placeholder:text-ink-subtle hover:border-brand-400 focus:border-brand-600";
   const labelClasses = "mb-1.5 block text-sm font-semibold text-ink";
 
   return (
