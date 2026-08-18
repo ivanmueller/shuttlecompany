@@ -16,10 +16,10 @@ export const contentType = "image/png";
  * Colours are literal here because Satori resolves no CSS custom properties.
  * They mirror the --brand-* tokens in globals.css; update both together.
  */
-const BRAND_950 = "#16242d";
-const BRAND_800 = "#2c414e";
-const BRAND_200 = "#b8d4da";
-const ACCENT_400 = "#f5c451";
+const BRAND_950 = "#051b3c";
+const BRAND_800 = "#0c3e7a";
+const BRAND_200 = "#b2d8fa";
+const ACCENT_400 = "#f8c34b";
 
 export default function OpengraphImage() {
   const fastest = routes.reduce((a, b) =>
@@ -76,19 +76,23 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <span
+          {/* Satori has no line-box model: <br /> is dropped and maxWidth on an
+              inline span does not wrap, so this headline used to run straight
+              off the right edge of the card and every share showed
+              "…without a". One block child per line instead. */}
+          <div
             style={{
+              display: "flex",
+              flexDirection: "column",
               fontSize: 68,
               fontWeight: 700,
               lineHeight: 1.08,
               letterSpacing: -1.5,
-              maxWidth: 900,
             }}
           >
-            Moraine Lake &amp; Lake Louise,
-            <br />
+            <span>Moraine Lake &amp; Lake Louise,</span>
             <span style={{ color: ACCENT_400 }}>without a reservation</span>
-          </span>
+          </div>
           <span style={{ fontSize: 27, color: "rgba(255,255,255,0.78)", maxWidth: 850 }}>
             A bus every {fastest.headwayMinutes} minutes. Seats released daily.
           </span>

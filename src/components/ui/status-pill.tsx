@@ -54,7 +54,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border font-semibold",
+        "status-field inline-flex items-center gap-1.5 rounded-full border font-semibold",
         size === "sm" ? "px-2 py-0.5 text-[0.6875rem]" : "px-2.5 py-1 text-xs",
         t.wrap,
         className,
