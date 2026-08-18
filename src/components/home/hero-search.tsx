@@ -75,9 +75,11 @@ export function HeroPlanner({
           </span>
         </h1>
 
+        {/* One line. This restated the headline and then made three claims
+            the next section makes properly; on a phone it was three lines of
+            the fold spent on repetition. */}
         <p className="text-on-photo mt-4 max-w-xl text-[1.0625rem] leading-relaxed text-white/90">
-          A scheduled bus, not a tour. Seats released daily, free parking, and you
-          come back on whichever bus you like.
+          A scheduled bus, not a tour — and you come back on whichever bus you like.
         </p>
       </div>
 
@@ -169,7 +171,10 @@ export function HeroPlanner({
                 })
               }
             >
-              See every departure
+              {/* One verb, everywhere. "See every departure" reads as
+                  navigation, not purchase, and was one of six different
+                  labels this page used for the same action. */}
+              Book a seat
             </ButtonLink>
             <button
               type="button"

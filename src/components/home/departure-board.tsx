@@ -14,13 +14,17 @@ export interface BoardRow {
   destination: string;
   /** Grouping key for the destination filter. */
   destinationId: string;
+  /** Where the rider actually stands. This is the fact a row is chosen on. */
+  originName: string;
   minutes: number;
   time: string;
   label: string;
+  arrivalLabel: string;
   seatsRemaining: number;
   availability: Availability;
   capacity: number;
   fare: number;
+  tripType: "round-trip" | "one-way";
 }
 
 export interface BoardFilter {
@@ -36,21 +40,20 @@ export interface BoardFilter {
  * just been told "every 20 minutes" can see the next real departures and
  * stops reading the marketing copy.
  *
- * Four things this had to fix:
+ * The rows used to spend their width printing constants. With the default
+ * filter selected — which is where nearly everyone lands — the destination,
+ * the route name and the fare were identical on all six rows, and the route
+ * name was clipped on every one of them at every breakpoint: "$29 · Moraine
+ * Lake Express" needs 163px and was given 65px on a 390px phone. Six rows
+ * differing only in a timestamp, three-fifths of each row spent re-printing
+ * the filter chip the visitor had just pressed.
  *
- *  - **It advertised the wrong product.** Merging every route chronologically
- *    made the board 38% Lake Louise lakeshore ($12) and only 31% Moraine
- *    Lake; typically two of eight visible rows went where the visitor was
- *    going. It now defaults to one destination and offers the others as
- *    filters.
- *  - **Rows jumped under the thumb.** The clock ticks every 30 seconds and
- *    re-filtered the list, so the instant a departure passed every row shifted
- *    up ~54px — mid-tap. The list is now frozen while a pointer is over it.
- *  - **Every row threw away the time.** Links carried `?time=` that /book
- *    ignored. They now carry the date too, and /book preselects.
- *  - **Pre-hydration it showed 3:45 am.** The server emits the whole day, so
- *    an afternoon visitor's first paint was six pre-dawn sunrise buses. The
- *    server now emits only what is plausibly ahead, and the client refines.
+ * So anything uniform across the visible rows is stated once, in the header,
+ * and the width goes to the two facts that actually distinguish one departure
+ * from another: **where you board** and **when you arrive**. Uniformity is
+ * computed rather than assumed — the Moraine Lake filter carries both the $29
+ * Route 1 and the $49 sunrise service, so before dawn the fare is per-row
+ * again and the header stops claiming a single price.
  */
 export function DepartureBoard({
   rows,
@@ -109,6 +112,21 @@ export function DepartureBoard({
   const minutesUntil = next ? next.minutes - effectiveNow : null;
   const soldOutToday = matching.filter((r) => r.availability === "sold-out").length;
 
+  /* What is genuinely constant across the rows on screen right now. Only
+     these get promoted into the header; everything else stays per-row, so
+     the board can never state a price or a destination that some visible
+     row contradicts. */
+  const sharedDestination =
+    visible.length > 0 && visible.every((r) => r.destinationId === next.destinationId)
+      ? next.destination
+      : null;
+  const sharedFare =
+    visible.length > 0 && visible.every((r) => r.fare === next.fare) ? next.fare : null;
+  const sharedTripType =
+    visible.length > 0 && visible.every((r) => r.tripType === next.tripType)
+      ? next.tripType
+      : null;
+
   return (
     <div className="on-dark overflow-hidden rounded-[calc(var(--radius)+0.2rem)] border border-brand-800/40 bg-brand-950 text-white shadow-[var(--shadow-lift)]">
       {/* Header carries the countdown rather than a separate bordered row.
@@ -121,11 +139,19 @@ export function DepartureBoard({
           </h2>
           {next && minutesUntil !== null ? (
             <p className="mt-0.5 text-[0.8125rem] text-white/85">
-              {next.destination} in{" "}
+              {/* Destination and fare, stated once for the whole board. */}
+              {sharedDestination ? `To ${sharedDestination}` : "All routes"}
+              {sharedFare !== null && (
+                <span className="text-white/60">
+                  {" · "}
+                  <span className="tabular">${sharedFare}</span>
+                  {sharedTripType === "round-trip" ? " round trip" : " one way"}
+                </span>
+              )}
+              {" · "}
               <span className="font-display font-bold text-accent-400 tabular">
                 {minutesUntil <= 0 ? "boarding now" : `${minutesUntil} min`}
-              </span>{" "}
-              <span className="text-white/60">· {next.label}</span>
+              </span>
             </p>
           ) : (
             <p className="mt-0.5 text-xs text-white/70">{dateLabel} · Mountain Time</p>
@@ -143,7 +169,11 @@ export function DepartureBoard({
       </div>
 
       {filters && filters.length > 1 && (
-        <div className="flex min-w-0 gap-2 overflow-x-auto border-b border-white/10 px-5 py-2.5 hide-scrollbar">
+        /* Wraps rather than scrolls. As a scroller these four chips needed
+           470px inside a 382px column, so at desktop width the last one was
+           sliced down its middle with `hide-scrollbar` hiding the only cue
+           that it could be scrolled to. Wrapping cannot clip. */
+        <div className="flex min-w-0 flex-wrap gap-1 border-b border-white/10 px-5 py-2.5">
           {filters.map((f) => (
             <button
               key={f.id}
@@ -154,7 +184,7 @@ export function DepartureBoard({
               }}
               aria-pressed={destinationId === f.id}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                "shrink-0 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-colors",
                 destinationId === f.id
                   ? "border-accent-400 bg-accent-400 text-ink"
                   : "border-white/25 text-white/80 hover:border-white/50",
@@ -206,18 +236,22 @@ export function DepartureBoard({
                     {row.label.slice(-2)}
                   </span>
                 </span>
-                <span
-                  aria-hidden
-                  className="grid size-7 shrink-0 place-items-center rounded-md bg-white/10 text-xs font-bold tabular"
-                >
-                  {row.routeNumber}
-                </span>
+                {/* The two facts that differ between rows. The route-number
+                    badge that used to sit here is our dispatcher's label —
+                    it was rendered six times and told a first-time visitor
+                    nothing. */}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-white">
-                    {row.destination}
+                    {sharedDestination ? row.originName : row.destination}
                   </span>
                   <span className="block truncate text-xs text-white/60">
-                    ${row.fare} · {row.routeName}
+                    {sharedDestination ? "arrives " : "from "}
+                    <span className="tabular">
+                      {sharedDestination ? row.arrivalLabel : row.originName}
+                    </span>
+                    {sharedFare === null && (
+                      <span className="tabular"> · ${row.fare}</span>
+                    )}
                   </span>
                 </span>
                 {/* `min-w-0` on the pill is what stopped the whole document

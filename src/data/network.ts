@@ -473,10 +473,13 @@ export const totalDailyDepartures = (): number =>
 export const serviceWindowLabel = (route: Route): string =>
   `${formatMinutesLabel(route.firstDeparture)} – ${formatMinutesLabel(route.lastDeparture)}`;
 
-export const headwayLabel = (route: Route): string =>
-  route.headwayMinutes >= 60
-    ? `Every ${route.headwayMinutes / 60} hour${route.headwayMinutes > 60 ? "s" : ""}`
-    : `Every ${route.headwayMinutes} minutes`;
+export const headwayLabel = (route: Route): string => {
+  if (route.headwayMinutes === 60) return "Hourly";
+  if (route.headwayMinutes > 60 && route.headwayMinutes % 60 === 0) {
+    return `Every ${route.headwayMinutes / 60} hours`;
+  }
+  return `Every ${route.headwayMinutes} minutes`;
+};
 
 export const fareLabel = (route: Route): string =>
   `$${route.fares.adult} ${route.tripType === "round-trip" ? "round trip" : "one way"}`;
@@ -664,14 +667,36 @@ export const reachableStopIds = (originId: string): string[] =>
  * all — and it cannot contradict the amber pill on a route card further down
  * the same page.
  */
-export const networkStatus = (): {
+export const networkStatus = (
+  /** Restrict to a subset — the site banner scopes itself, see below. */
+  within: Route[] = routes,
+): {
   status: ServiceStatus;
   affected: Route[];
 } => {
-  const affected = routes.filter((r) => r.status !== "ontime");
+  const affected = within.filter((r) => r.status !== "ontime");
   if (affected.length === 0) return { status: "ontime", affected: [] };
   const status: ServiceStatus = affected.some((r) => r.status === "issue")
     ? "issue"
     : "delay";
   return { status, affected };
 };
+
+/**
+ * The routes a disruption is worth interrupting the page for.
+ *
+ * The banner is the first line of every page, above the logo. It was reading
+ * the whole network, so a ten-minute delay on the Canmore hourly — a route
+ * almost nobody who lands here is looking for — took that line site-wide and
+ * spent it on an irrelevant negative.
+ *
+ * Scoping it to the lake-bound services keeps the mechanism honest where it
+ * matters (a rider heading to Moraine Lake still gets told) without letting
+ * the least-wanted route in the network set the tone of the home page. A
+ * disruption outside this set is still reported: the route's own card and its
+ * route page both carry the amber pill and the note.
+ */
+export const lakeBoundRoutes = (): Route[] =>
+  routes.filter(
+    (r) => r.destinationId === "moraine-lake" || r.destinationId === "ll-lakeshore",
+  );

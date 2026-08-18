@@ -54,7 +54,10 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "status-field inline-flex items-center gap-1.5 rounded-full border font-semibold",
+        /* `whitespace-nowrap`: the label is two words and was breaking across
+           two lines whenever it sat in a tight flex row, which reads as a
+           layout fault rather than a status. */
+        "status-field inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold",
         size === "sm" ? "px-2 py-0.5 text-[0.6875rem]" : "px-2.5 py-1 text-xs",
         t.wrap,
         className,
@@ -69,7 +72,7 @@ export function StatusPill({
 /**
  * Seat availability, expressed the way it actually converts.
  *
- * Two rules, both learned the expensive way:
+ * Three rules, all learned the expensive way:
  *
  *  1. **No numbers we cannot substantiate.** While `site.inventoryIsLive` is
  *     false the seat counts come from a hash of route + date + time, not from
@@ -81,6 +84,13 @@ export function StatusPill({
  *     site. It used to fire at eight seats or fewer, which on a 24-seat coach
  *     is a healthy bus and lit roughly one row in seven. A signal that common
  *     is not a signal.
+ *  3. **One green means one thing.** `wide-open` and `available` both rendered
+ *     green, both meant "you can book this", and alternated down the board —
+ *     so a visitor was invited to decode a distinction that carried no
+ *     decision. Worse, while inventory is not live the boundary between them
+ *     comes from the demand model, which makes the distinction not merely
+ *     useless but invented. They collapse to one label; `Availability` keeps
+ *     both states because the fare and capacity planning still reads them.
  */
 export function SeatsPill({
   availability,
@@ -111,12 +121,5 @@ export function SeatsPill({
     );
   }
 
-  return (
-    <StatusPill
-      status="ontime"
-      label={availability === "wide-open" ? "Wide open" : "Seats available"}
-      size="sm"
-      className={className}
-    />
-  );
+  return <StatusPill status="ontime" label="Seats" size="sm" className={className} />;
 }

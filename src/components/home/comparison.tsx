@@ -124,7 +124,7 @@ export function ComparisonTable() {
           next heading, at one of the two highest-intent moments on the page. */}
       <div className="mt-8">
         <ButtonLink href="/book?to=moraine-lake" size="lg">
-          See today&apos;s seats to Moraine Lake
+          Book a seat
         </ButtonLink>
       </div>
     </div>

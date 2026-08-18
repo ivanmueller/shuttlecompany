@@ -19,14 +19,16 @@ import { formatCad } from "@/lib/utils";
  *    of the mechanism. "Without a reservation" reads to an anxious first-time
  *    visitor as "no guaranteed seat", which is the exact fear that brought
  *    them here.
- *  - The sub-paragraph was six lines on a phone — 180px, a quarter of the
- *    visible screen — repeating what the headline and trust strip already
- *    say. It is one line now.
- *  - The proof strip carried four numbers, three of which were about us and
- *    one of which ("98.6% departed on time last season") a first-season
- *    operator cannot have. All four now answer a live question.
  *  - The board sits here, not five screens down, because it is the only
  *    element on the page that turns the claim into a fact.
+ *  - The four-stat row is gone. It read as a summary of the offer, but every
+ *    one of its four figures was already on screen or within two screens:
+ *    "$29" is in the headline, "Any bus" is in the sub-paragraph, "Under 6
+ *    free" is in the journey line under the origin picker, and free parking
+ *    leads the section directly below. On a 390px phone it and the long
+ *    sub-paragraph were what pushed the first bookable departure to 752px and
+ *    the primary action to 1,239px — a screen and a half below the fold on
+ *    the page whose stated principle is that the funnel starts above it.
  */
 export function Hero({
   rows,
@@ -67,29 +69,6 @@ export function Hero({
           headway={headway}
           guaranteeMinutes={site.guarantee.windowMinutes}
         />
-
-        {/* Four facts, each answering a question someone is actually asking,
-            and each checkable against the timetable further down this page. */}
-        <dl className="mt-9 grid grid-cols-2 gap-x-6 gap-y-5 text-white sm:grid-cols-4">
-          {[
-            { v: formatCad(fare), l: "round trip, per adult" },
-            { v: "Free", l: `parking — ${site.proof.parkingSpaces}+ reserved spaces` },
-            { v: "Any bus", l: "for your return, no fixed slot" },
-            { v: "Under 6", l: "travel free on every route" },
-          ].map((stat) => (
-            <div key={stat.l}>
-              <dt className="sr-only">{stat.l}</dt>
-              <dd>
-                <span className="text-on-photo block font-display text-[1.75rem] font-bold leading-none tabular">
-                  {stat.v}
-                </span>
-                <span className="text-on-photo mt-1.5 block text-[0.8125rem] leading-snug text-white/80">
-                  {stat.l}
-                </span>
-              </dd>
-            </div>
-          ))}
-        </dl>
       </div>
     </section>
   );
