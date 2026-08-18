@@ -18,6 +18,8 @@
  * and sitemap entry all follow automatically.
  */
 
+import { site } from "@/config/site";
+
 export type Block =
   | { type: "prose"; heading?: string; paragraphs: string[] }
   | {
@@ -102,7 +104,7 @@ export const landingPages: LandingPage[] = [
             "Cheapest by a wide margin. Sells out within minutes of each release.",
           ],
           [
-            "Larch Line Route 1",
+            `${site.name} Route 1`,
             "$29",
             "Every 20 minutes, seats released daily",
             "Open return, free reserved parking, same-day seats.",
@@ -295,11 +297,11 @@ export const landingPages: LandingPage[] = [
         columns: ["Operator", "Fare", "Frequency", "Reservation"],
         rows: [
           ["Roam Transit 8X", "$12.50 one way", "Several times daily in season", "Required, often sold out"],
-          ["Larch Line Route 4", "$19 one way", "Every 30 minutes, 5:30 am – 9:00 pm", "Book any time, including same day"],
+          [`${site.name} Route 4`, "$19 one way", "Every 30 minutes, 5:30 am – 9:00 pm", "Book any time, including same day"],
           ["Driving", "Fuel + parking", "Any time", "Lake Louise lots fill before 07:00"],
           ["Guided tour", "$100+", "Fixed departures", "Book ahead"],
         ],
-        note: "Roam fare verified 2026-08-01. Larch Line is not affiliated with Roam Transit or the Bow Valley Regional Transit Services Commission.",
+        note: `Roam fare verified 2026-08-01. ${site.name} is not affiliated with Roam Transit or the Bow Valley Regional Transit Services Commission.`,
       },
       {
         type: "prose",
@@ -505,8 +507,8 @@ export const landingPages: LandingPage[] = [
         columns: ["Operator", "One-way fare", "Frequency", "Journey time"],
         rows: [
           ["Roam Transit 8X", "$12.50", "Several daily, reservation required", "About 60 min"],
-          ["Larch Line Route 4", "$19", "Every 30 minutes, 5:30 am – 9:00 pm", "65 min"],
-          ["Larch Line Route 5 (from Canmore)", "$29", "Hourly", "95 min from Canmore"],
+          [`${site.name} Route 4`, "$19", "Every 30 minutes, 5:30 am – 9:00 pm", "65 min"],
+          [`${site.name} Route 5 (from Canmore)`, "$29", "Hourly", "95 min from Canmore"],
           ["Intercity coach", "$25–40", "A few daily", "60–75 min"],
         ],
         note: "Fares verified 2026-08-01. Not affiliated with Roam Transit or any other operator listed.",

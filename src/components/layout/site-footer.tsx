@@ -138,6 +138,10 @@ export function SiteFooter() {
             <p>
               © {site.season.year} {site.legalName}. Not affiliated with Parks Canada,
               Roam Transit or Moraine Lake Bus Company.
+              {/* Attribution for the hero photograph. Most stock licences and
+                  every Creative Commons licence require a visible credit; it
+                  renders only when site.heroPhoto.credit is set. */}
+              {site.heroPhoto?.credit ? ` Hero photograph ${site.heroPhoto.credit}.` : ""}
             </p>
             {/* This used to read "Licensed intra-provincial passenger carrier
                 · Alberta Transportation · Operating authority pending", which

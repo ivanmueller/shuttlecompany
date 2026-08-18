@@ -122,6 +122,53 @@ export const site = {
   },
 
   /**
+   * Hero backdrop photograph.
+   *
+   * `null` renders the drawn `AlpineScene` instead, which is what ships today.
+   * Set this and the hero swaps to a real photograph — no component edit, and
+   * the scrim, the headline treatment and the LCP handling stay as they are.
+   *
+   *   1. Put the file in `public/`, ~2400px wide, JPEG or WebP, under 400 kB.
+   *   2. Set `src` to its path.
+   *   3. Leave `alt` empty unless the photograph carries information the
+   *      headline does not. It sits behind a scrim under an <h1> that already
+   *      names the destination, so it is decorative in the WCAG sense and an
+   *      alt string here is noise in a screen reader.
+   *   4. `focus` is the CSS object-position. The headline and the booking card
+   *      occupy the left third on desktop, so keep the subject right of centre
+   *      — "70% 50%" is the usual answer for a wide mountain frame.
+   *   5. `credit` renders in the footer fine print. Required for most stock
+   *      licences and for anything Creative Commons; leave `null` only for a
+   *      photograph the company owns outright.
+   *
+   * See docs/BRAND.md §8 for what the photograph should actually be of.
+   */
+  heroPhoto: {
+    /** Lake Louise lakeshore and boathouse — Route 3's destination.
+     *  Upload the file to `public/` under exactly this name; see
+     *  `public/README.md`. Until it exists the hero falls back to the drawn
+     *  AlpineScene rather than rendering a broken image. */
+    src: "/hero-lake-louise.jpg",
+    /** Empty on purpose. The photograph sits behind a scrim under an <h1>
+     *  that already names the destination, so it is decorative in the WCAG
+     *  sense and an alt string here is noise in a screen reader. */
+    alt: "",
+    /** The hero is far wider than tall, so a 3:2 source is cropped
+     *  vertically and the Y value is the one doing the work. 35% keeps the
+     *  ridgeline and the boathouse band and crops the busy foreground out
+     *  from under the four-stat row. */
+    focus: "50% 35%",
+    /** Renders in the footer fine print. Set it if the licence asks for
+     *  attribution; null for a photograph the company owns outright. */
+    credit: null,
+  } as null | {
+    src: string;
+    alt: string;
+    focus: string;
+    credit: string | null;
+  },
+
+  /**
    * The seat guarantee.
    *
    * The category's real fear is not losing $29, it is losing the one day the

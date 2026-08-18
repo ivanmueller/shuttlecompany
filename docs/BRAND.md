@@ -266,7 +266,82 @@ composite into the brand rather than sitting on top of it.
 
 ---
 
-## 8. Typography
+## 8. The hero photograph
+
+`site.heroPhoto` is already pointed at `/hero-lake-louise.jpg`. **Upload a file
+to `public/` under that name and the hero swaps** — no config edit, no
+component edit, same scrim, same headline treatment, same LCP handling
+(`preload` + `sizes="100vw"`, so phones get a phone-width frame over park LTE
+rather than a 3840px one). Specs are in `public/README.md`.
+
+Until that file exists — or if it ever 404s in production — the hero falls
+back to the drawn `AlpineScene` rather than rendering a hole. That fallback is
+the reason the config can safely name a file before the file is uploaded, and
+it is worth keeping: `public/` assets are uploaded by hand, and a missing hero
+is invisible in a build log and obvious to a visitor.
+
+### What the photograph is for
+
+Not to sell Moraine Lake. **The visitor has already chosen the destination** —
+they have flights, a hotel and a rejected Parks Canada reservation. Selling
+them the lake again is the one job the hero does not need to do.
+
+Its two real jobs are to make the operation feel like it exists, and to give
+the headline somewhere quiet to sit. The departure board does the persuading.
+
+### The shot, in order of preference
+
+**1. Your own coach, in the park, at first light.** Highest trust available,
+completely ownable, and the only hero image no competitor can run. Not possible
+before launch — but budget a half-day shoot for the week the vehicle wrap goes
+on, because this replaces everything below.
+
+**2. Valley of the Ten Peaks from the Moraine Lake shoreline at dawn — not
+from the Rockpile.** The Rockpile view is the most-used image in this market;
+Moraine Lake Bus Company, Parks Canada and every OTA run some version of it,
+so it actively makes you look like the same product. Shoreline level at first
+light is recognisably the same place, visually differentiated, and it sells the
+sunrise service, which is the one thing no public shuttle offers.
+
+**3. Lake Louise lakeshore with Victoria Glacier, early, before the crowd.**
+The second route, and the one that still works after Moraine Lake Road closes
+in mid-October.
+
+### Composition requirements
+
+These are layout constraints, not taste:
+
+- **16:9 or wider, at least 2400px, under 400 kB** after export.
+- **Subject right of centre.** The headline and booking card own the left
+  third on desktop; the live board owns the right third above it. The
+  interesting ridgeline wants the upper right, where `.scrim-photo` is
+  deliberately lightest.
+- **Nothing important in the bottom quarter** — the four-stat row sits there.
+- **First light or blue hour, not midday.** Postcard saturation makes the
+  turquoise fight the navy and forces the scrim to work harder, which greys
+  the whole frame. Cool shadows, warm rim light.
+- **No horizon line through the vertical centre.** It collides with the edge
+  of the booking card.
+- **No identifiable faces** without signed releases, and **no competitor
+  livery in frame** — a Roam coach in your hero is a gift to Roam.
+
+### Sourcing, and the legal edges
+
+- **Never reuse a competitor's photography.** It is the fastest route to a
+  takedown and, in this market, to being recognised for it.
+- **Stock is a compromise, not a solution.** The Unsplash and Pexels licences
+  permit commercial use without attribution, but the frame will also be on
+  several hundred other sites — possibly including a competitor's. Getty and
+  Adobe Stock buy you better odds; commissioning buys you certainty and costs
+  less than two seasons of stock subscriptions.
+- **Commercial shoots in a national park may need a Parks Canada permit.** A
+  single photographer on foot with a tripod usually does not; a crew, talent
+  or a vehicle staged for the camera does. Confirm before the shoot, not after.
+- **Set `credit` whenever the licence asks for one.** It renders in the footer
+  fine print automatically. Leave it `null` only for images the company owns
+  outright.
+
+## 9. Typography
 
 | Role | Face | Why |
 | --- | --- | --- |
@@ -278,7 +353,7 @@ third-party request, no layout shift.
 
 ---
 
-## 9. How to re-brand anyway
+## 10. How to re-brand anyway
 
 Edit **block 1 of `src/app/globals.css`**, then two files that cannot read CSS
 variables:
@@ -318,11 +393,11 @@ Costs you a memory hook, which a first-season operator can least afford.
 
 ---
 
-## 10. Placeholder assets to replace before launch
+## 11. Placeholder assets to replace before launch
 
 | Asset | Where | Note |
 | --- | --- | --- |
-| Hero backdrop | `src/components/brand/alpine-scene.tsx` | A drawn SVG, not a photograph. Replace with a licensed or commissioned image behind the same `.scrim-photo`. Do **not** reuse a competitor's photography. |
-| Wordmark | `src/components/brand/logo.tsx` | Drawn in `currentColor`, no baked-in hex. Swap for the real mark. |
-| Company name | `src/config/site.ts` | "Larch Line" is a placeholder — see the note in that file. |
+| Hero backdrop | `site.heroPhoto` | A drawn SVG until this is set. Setting it swaps in a photograph with no component edit — see §8. Do **not** reuse a competitor's photography. |
+| Wordmark | `src/components/brand/logo.tsx` | Drawn in `currentColor`, no baked-in hex. The mark is a larch sprig, so it is the one asset a rename actually invalidates — design it *after* the name is settled, not before. |
+| Company name | `src/config/site.ts` → `name`, `legalName` | "Larch Line" is a placeholder. Every rendered string reads from `site.name`, so a rename is a one-line edit plus the domain, the two email addresses and the two social handles in the same file. The palette is unaffected: navy was chosen on positioning and competitive whitespace, and "Larch Gold" is only the internal label for `--accent-*` — the hex does not move if the name does. |
 | Credentials | `src/config/site.ts` → `credentials` | NSC number, Parks Canada licence, liability cover, named operator. For a first-season operator these do more trust work than a star rating would. |
