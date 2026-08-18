@@ -4,9 +4,11 @@
   "shape": "package",
   "srcDir": "src/components",
   "tsconfig": ".design-sync/tsconfig.sync.json",
-  "buildCmd": "node .design-sync/build-css.mjs",
+  "buildCmd": "node .design-sync/prepare.mjs",
   "cssEntry": ".design-sync/.cache/styles.compiled.css",
-  "extraFonts": [".design-sync/fonts/fonts.css"],
+  "extraFonts": [
+    ".design-sync/fonts/fonts.css"
+  ],
   "componentSrcMap": {
     "legalMetadata": null
   }

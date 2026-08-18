@@ -2,6 +2,7 @@
   "name": "shuttlecompany",
   "version": "0.1.0",
   "private": true,
+  "types": "dist/types/index.d.ts",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
