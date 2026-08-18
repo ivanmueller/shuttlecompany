@@ -18,3 +18,28 @@
 @source "../src/config/**/*.ts";
 @source "./previews/**/*.tsx";
 @source "./shims/**/*.tsx";
+
+/* ---------------------------------------------------------------------------
+   Safelist: the design system's own token vocabulary.
+
+   Tailwind only emits utilities it finds in the scanned source, so a stylesheet
+   built from src/ alone contains exactly the classes these components happen to
+   use today — `rounded-card` and `bg-brand-300` are perfectly valid but absent.
+   That is fine for the app, which recompiles whenever it changes, and wrong for
+   a design system: designs the Claude Design agent builds are styled by this
+   prebuilt stylesheet and nothing recompiles for them, so a legitimate utility
+   that no existing component used would silently render unstyled.
+
+   Everything below is a token declared in the `@theme inline` block of
+   src/app/globals.css. Adding a token there means adding it here.
+   --------------------------------------------------------------------------- */
+@source inline("{bg,text,border,ring,from,to,divide}-brand-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("{bg,text,border,ring,from,to}-accent-{400,500,600,700}");
+@source inline("{bg,text,border,ring}-{ontime,delay,issue,info}");
+@source inline("{bg,text,border}-{ontime,delay,issue,info}-{bg,ink}");
+@source inline("{bg,text,border,ring,divide}-{paper,sunken,ink,ink-muted,ink-subtle,line,line-strong}");
+@source inline("hover:{bg,text,border}-brand-{50,400,700,800,900}");
+@source inline("hover:{bg,text}-accent-{400,500,600}");
+@source inline("rounded-card");
+@source inline("{shadow}-{card,lift}");
+@source inline("font-{sans,display}");
