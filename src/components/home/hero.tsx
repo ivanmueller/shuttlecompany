@@ -1,4 +1,4 @@
-import { AlpineScene } from "@/components/brand/alpine-scene";
+import { HeroBackdrop } from "@/components/brand/hero-backdrop";
 import { HeroPlanner } from "@/components/home/hero-search";
 import { DepartureBoard, type BoardRow, type BoardFilter } from "@/components/home/departure-board";
 import { routeBySlug } from "@/data/network";
@@ -57,7 +57,7 @@ export function Hero({
 
   return (
     <section className="on-dark relative isolate overflow-hidden bg-brand-900">
-      <AlpineScene className="absolute inset-0 size-full" />
+      <HeroBackdrop />
       <div className="absolute inset-0 scrim-photo" aria-hidden />
 
       <div className="container-page relative pb-10 pt-8 md:pb-14 md:pt-14">

@@ -122,6 +122,35 @@ export const site = {
   },
 
   /**
+   * Hero backdrop photograph.
+   *
+   * `null` renders the drawn `AlpineScene` instead, which is what ships today.
+   * Set this and the hero swaps to a real photograph — no component edit, and
+   * the scrim, the headline treatment and the LCP handling stay as they are.
+   *
+   *   1. Put the file in `public/`, ~2400px wide, JPEG or WebP, under 400 kB.
+   *   2. Set `src` to its path.
+   *   3. Leave `alt` empty unless the photograph carries information the
+   *      headline does not. It sits behind a scrim under an <h1> that already
+   *      names the destination, so it is decorative in the WCAG sense and an
+   *      alt string here is noise in a screen reader.
+   *   4. `focus` is the CSS object-position. The headline and the booking card
+   *      occupy the left third on desktop, so keep the subject right of centre
+   *      — "70% 50%" is the usual answer for a wide mountain frame.
+   *   5. `credit` renders in the footer fine print. Required for most stock
+   *      licences and for anything Creative Commons; leave `null` only for a
+   *      photograph the company owns outright.
+   *
+   * See docs/BRAND.md §8 for what the photograph should actually be of.
+   */
+  heroPhoto: null as null | {
+    src: string;
+    alt: string;
+    focus: string;
+    credit: string | null;
+  },
+
+  /**
    * The seat guarantee.
    *
    * The category's real fear is not losing $29, it is losing the one day the
