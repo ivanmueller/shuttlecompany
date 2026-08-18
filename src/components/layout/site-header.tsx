@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HeaderNav, type NavRoute } from "@/components/layout/header-nav";
-import { networkStatus, routes } from "@/data/network";
+import { networkStatus, lakeBoundRoutes, routes } from "@/data/network";
 import { site } from "@/config/site";
 
 /**
@@ -17,7 +17,11 @@ import { site } from "@/config/site";
  * the network module stays out of every page's client bundle.
  */
 export function SiteHeader() {
-  const { status, affected } = networkStatus();
+  /* Scoped to the lake-bound services. This used to read the whole network,
+     so a delay on the Canmore hourly took the first line of every page —
+     above the logo — from the ~90% of visitors here for Moraine Lake. The
+     affected route still shows its amber pill on its own card and page. */
+  const { status, affected } = networkStatus(lakeBoundRoutes());
   const navRoutes: NavRoute[] = routes.map((r) => ({
     id: r.id,
     number: r.number,

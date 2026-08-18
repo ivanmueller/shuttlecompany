@@ -25,25 +25,21 @@ export const faqs: Faq[] = [
     q: "Do I need a reservation, or can I just show up?",
     a: "Booking ahead is always safer, but unlike the Parks Canada shuttle we hold a share of every departure for same-day sales. Seats are released continuously through the day rather than in two seasonal windows, so if you missed the Parks Canada reservation release you can usually still travel with us today.",
     topic: "booking",
-    featured: true,
   },
   {
     q: "How is this different from the Parks Canada shuttle?",
     a: "The Parks Canada shuttle is reservation-only, and its seats are released in scheduled windows that sell out within minutes of opening. We run a scheduled public transit service instead: departures every 15 to 30 minutes on our core routes, seats released daily, and an open return so you choose when to come back. Parks Canada is cheaper if you can get a seat — we exist for the far larger number of visitors who cannot.",
     topic: "booking",
-    featured: true,
   },
   {
     q: "How is this different from Roam Transit?",
     a: "Roam Transit is the Bow Valley's regional public transit system and it is excellent. Its Lake Louise express reservations are also sold out for much of the summer, and Roam does not serve Moraine Lake at all. We add capacity on the Banff–Lake Louise corridor and run the Moraine Lake and lakeshore legs that Roam does not operate.",
     topic: "booking",
-    featured: true,
   },
   {
     q: "Can I change or cancel my booking?",
     a: "Yes. Change your date or time free of charge up to 2 hours before departure, using the link in your confirmation email. Cancel more than 24 hours ahead for a full refund; cancel inside 24 hours and you receive a credit valid for the rest of the season.",
     topic: "booking",
-    featured: true,
   },
   {
     q: "Are your fares one-way or round trip?",
@@ -54,7 +50,6 @@ export const faqs: Faq[] = [
     q: "Do I get to choose my return time?",
     a: "On our Moraine Lake and lakeshore routes you book an outbound departure and return on any bus with an open seat. Show your ticket and board. On a busy afternoon you may wait for the following bus, which is at most 20 minutes on Route 1.",
     topic: "booking",
-    featured: true,
   },
   {
     q: "How far in advance should I book?",
@@ -124,13 +119,11 @@ export const faqs: Faq[] = [
     q: "Where do I park, and is it really free?",
     a: "Yes, and your space is guaranteed. Free reserved parking at the Lake Louise Gondola Park & Ride is included with every Route 1 and Route 3 booking, and at Samson Mall for Route 2 sunrise departures. There are over 600 spaces plus an overflow lot that opens automatically on peak days.",
     topic: "getting-here",
-    featured: true,
   },
   {
     q: "Do you pick up in Banff or Canmore?",
     a: "Yes. Route 4 runs Banff to Lake Louise every 30 minutes, and Route 5 runs Canmore to Lake Louise hourly without a transfer. Both connect to our Moraine Lake and lakeshore services at the Lake Louise Village Transit Hub.",
     topic: "getting-here",
-    featured: true,
   },
   {
     q: "Do I need a Parks Canada park pass?",

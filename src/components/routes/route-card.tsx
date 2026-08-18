@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   type Route,
   stopById,
+  planJourneys,
   dailyDepartureCount,
   headwayLabel,
   serviceWindowLabel,
@@ -14,51 +15,69 @@ import { site } from "@/config/site";
 /**
  * Route card.
  *
- * Every competitor sells these as "tours" with a hero photo and a price.
- * We sell them as transit: route number, headway, service window, fare. That
- * framing is the product differentiator and it also happens to convert better
- * for the intent we are targeting — someone who has already decided to go and
- * now needs a seat.
+ * Every competitor sells these as "tours" with a hero photo and a price. We
+ * sell them as transit: journey, frequency, service window, fare. That framing
+ * is the product differentiator and it converts better for the intent we are
+ * targeting — someone who has already decided to go and now needs a seat.
  *
- * The frequency line carries the most weight, so it gets the most ink.
+ * What these cards used to lead with was the *operator's* name for the
+ * product: "Route 4 — Banff — Lake Louise Connector". That asks a first-time
+ * visitor to hold a network diagram in their head and derive that Banff to
+ * Moraine Lake means Route 4 and then Route 1 — a derivation nothing on the
+ * page offered to do for them. It also did not fit: three of the five names
+ * were clipped mid-word on a 390px phone.
+ *
+ * So the headline is now the journey, in the visitor's own terms, and the
+ * route number is filed underneath as the reference it is. Where a card does
+ * not reach Moraine Lake directly, the onward connection is computed and
+ * stated on the card rather than left as an exercise.
  */
+
+/** The onward leg to the lake, for any route that stops short of it. */
+function onwardToMoraine(route: Route) {
+  if (route.destinationId === "moraine-lake") return null;
+  const journey = planJourneys(route.originId, "moraine-lake")[0];
+  if (!journey || journey.legs.length < 2) return null;
+  return journey;
+}
+
 export function RouteCard({ route }: { route: Route }) {
   const origin = stopById(route.originId);
   const destination = stopById(route.destinationId);
   const departures = dailyDepartureCount(route);
+  const onward = onwardToMoraine(route);
 
-  /* Honest anchor: only shown where a real competitor sells the same trip. */
+  /* Honest anchor: only where a real competitor sells the same trip. */
   const anchor =
-    route.slug === "moraine-lake-express"
-      ? site.benchmarks.moraineLakeBusDaytime
-      : route.slug === "moraine-lake-sunrise"
-        ? site.benchmarks.moraineLakeBusSunrise
-        : null;
+    route.slug === "moraine-lake-sunrise"
+      ? site.benchmarks.moraineLakeBusSunrise
+      : null;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-[calc(var(--radius)+0.2rem)] border border-line bg-paper shadow-[var(--shadow-card)] transition-shadow duration-200 hover:shadow-[var(--shadow-lift)]">
-      <header className="flex items-start gap-3 border-b border-line bg-sunken px-5 py-4">
-        <span
-          className="grid size-11 shrink-0 place-items-center rounded-[var(--radius)] bg-brand-800 font-display text-lg font-bold text-white tabular"
-          aria-hidden
-        >
-          {route.number}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
-            Route {route.number}
-            {route.popular && (
-              <span className="ml-2 rounded-full bg-accent-400 px-2 py-0.5 text-[0.625rem] font-bold text-ink">
-                Most booked
-              </span>
-            )}
-          </p>
-          <h3 className="mt-1 truncate font-sans text-[1.0625rem] font-bold leading-tight text-ink">
-            <Link href={`/routes/${route.slug}`} className="inline-block py-0.5 hover:text-brand-700">
-              {route.name}
-            </Link>
-          </h3>
-        </div>
+      <header className="border-b border-line bg-sunken px-5 py-4">
+        {/* The journey, which is what the visitor is shopping for. */}
+        <h3 className="font-sans text-[1.0625rem] font-bold leading-snug text-ink">
+          <Link
+            href={`/routes/${route.slug}`}
+            className="inline-block py-0.5 hover:text-brand-700"
+          >
+            {origin.shortName}{" "}
+            <span aria-hidden className="text-brand-700">
+              →
+            </span>
+            <span className="sr-only">to</span> {destination.shortName}
+          </Link>
+        </h3>
+        {/* The route number, filed where a reference belongs. */}
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
+          Route {route.number} · {route.name}
+          {route.popular && (
+            <span className="rounded-full bg-accent-400 px-2 py-0.5 text-[0.625rem] font-bold text-ink">
+              Most booked
+            </span>
+          )}
+        </p>
       </header>
 
       <div className="flex flex-1 flex-col p-5">
@@ -67,75 +86,68 @@ export function RouteCard({ route }: { route: Route }) {
           {headwayLabel(route)}
         </p>
         <p className="mt-1.5 text-[0.8125rem] text-ink-muted tabular">
-          {departures} departures daily · {serviceWindowLabel(route)}
+          {route.durationMinutes} min · {departures} departures daily ·{" "}
+          {serviceWindowLabel(route)}
         </p>
 
-        <ol className="mt-4 space-y-2.5 border-l border-dashed border-line-strong pl-4 text-sm">
-          <li className="relative">
-            <span
-              aria-hidden
-              className="absolute -left-[1.3125rem] top-1.5 size-2 rounded-full border-2 border-brand-700 bg-paper"
-            />
-            <span className="font-medium text-ink">{origin.shortName}</span>
-          </li>
-          {route.stopIds.length > 2 && (
-            <li className="relative text-xs text-ink-subtle">
-              <span aria-hidden className="absolute -left-[1.1875rem] top-1.5 size-1 rounded-full bg-line-strong" />
-              {route.stopIds.length - 2} stop
-              {route.stopIds.length - 2 === 1 ? "" : "s"} between
-            </li>
-          )}
-          <li className="relative">
-            <span
-              aria-hidden
-              className="absolute -left-[1.3125rem] top-1.5 size-2 rounded-full bg-brand-700"
-            />
-            <span className="font-medium text-ink">{destination.shortName}</span>
-            <span className="ml-1.5 text-ink-subtle tabular">
-              · {route.durationMinutes} min
-            </span>
-          </li>
-        </ol>
+        {route.stopIds.length > 2 && (
+          <p className="mt-2 text-[0.8125rem] text-ink-subtle">
+            {route.stopIds.length - 2} stop
+            {route.stopIds.length - 2 === 1 ? "" : "s"} between
+          </p>
+        )}
+
+        {/* The derivation the visitor should not have to do themselves. */}
+        {onward && (
+          <p className="mt-4 rounded-[var(--radius)] border border-line bg-sunken px-3.5 py-2.5 text-[0.8125rem] leading-relaxed text-ink-muted">
+            <span className="font-semibold text-ink">
+              Going to Moraine Lake?
+            </span>{" "}
+            Change at {stopById(onward.viaStopId ?? "").shortName} for Route{" "}
+            {onward.legs[1].route.number} — about {onward.totalMinutes} min in
+            total, {formatCad(onward.adultFare)} per adult, both legs booked
+            together.
+          </p>
+        )}
 
         <div className="mt-auto pt-5">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="flex items-baseline gap-2">
-                <span className="font-display text-[1.75rem] font-bold leading-none text-ink">
-                  {formatCad(route.fares.adult)}
-                </span>
-                {anchor && (
-                  <span className="text-sm text-ink-subtle line-through tabular">
-                    {formatCad(anchor)}
-                  </span>
-                )}
+              <p className="font-display text-[1.75rem] font-bold leading-none text-ink">
+                {formatCad(route.fares.adult)}
               </p>
               <p className="mt-1 text-xs text-ink-subtle">
                 per adult,{" "}
                 {route.tripType === "round-trip" ? "round trip" : "one way"}
               </p>
+              {/* Attributed, never struck through. A struck-through
+                  competitor price reads as our own former price — an
+                  ordinary-selling-price claim we cannot substantiate. */}
+              {anchor && (
+                <p className="mt-1.5 text-xs leading-relaxed text-ink-subtle">
+                  Moraine Lake Bus Co. charges {formatCad(anchor)}.
+                </p>
+              )}
             </div>
             <StatusPill status={route.status} size="sm" />
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <ButtonLink
-              href={`/book?route=${route.slug}`}
-              size="md"
-            >
-              {/* "Book Route 4" names our internal identifier. This names
-                  what the visitor gets, and carries the fare advantage into
-                  the label itself. */}
-              Book — {formatCad(route.fares.adult)}
-            </ButtonLink>
-            <ButtonLink
-              href={`/routes/${route.slug}`}
-              variant="outline"
-              size="md"
-            >
-              Timetable
-            </ButtonLink>
-          </div>
+          {/* One action. "Timetable" used to be a second button of equal
+              weight sitting beside the purchase — five extra exits placed
+              next to five buy buttons — and is a text link now. */}
+          <ButtonLink
+            href={`/book?route=${route.slug}`}
+            size="md"
+            className="mt-4 w-full"
+          >
+            Book — {formatCad(route.fares.adult)}
+          </ButtonLink>
+          <Link
+            href={`/routes/${route.slug}`}
+            className="mt-3 inline-block py-1 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline"
+          >
+            Full timetable →
+          </Link>
         </div>
       </div>
     </article>
@@ -177,24 +189,31 @@ export function FlagshipRouteCard({
     >
       <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         <div className="p-6 md:p-7">
-          <p className="flex flex-wrap items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
-            Route {route.number}
+          <h3 className="font-sans text-2xl font-bold leading-tight text-ink">
+            <Link
+              href={`/routes/${route.slug}`}
+              className="inline-block py-0.5 hover:text-brand-700"
+            >
+              {origin.shortName}{" "}
+              <span aria-hidden className="text-brand-700">
+                →
+              </span>
+              <span className="sr-only">to</span> {destination.shortName}
+            </Link>
+          </h3>
+          <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
+            Route {route.number} · {route.name}
             <span className="rounded-full bg-accent-400 px-2 py-0.5 text-[0.625rem] font-bold text-ink">
               Most booked
             </span>
             <StatusPill status={route.status} size="sm" />
           </p>
-          <h3 className="mt-2 font-sans text-2xl font-bold leading-tight text-ink">
-            <Link href={`/routes/${route.slug}`} className="inline-block py-0.5 hover:text-brand-700">
-              {route.name}
-            </Link>
-          </h3>
-          <p className="mt-3 font-display text-[1.75rem] font-bold leading-none text-brand-800">
+          <p className="mt-4 font-display text-[1.75rem] font-bold leading-none text-brand-800">
             {headwayLabel(route)}
           </p>
           <p className="mt-2 text-[0.9375rem] text-ink-muted tabular">
-            {dailyDepartureCount(route)} departures daily · {serviceWindowLabel(route)} ·{" "}
-            {origin.shortName} to {destination.shortName} in {route.durationMinutes} min
+            {route.durationMinutes} min · {dailyDepartureCount(route)} departures
+            daily · {serviceWindowLabel(route)}
           </p>
           <p className="mt-4 max-w-lg text-[0.9375rem] leading-relaxed text-ink-muted">
             {route.summary}
@@ -218,13 +237,16 @@ export function FlagshipRouteCard({
               {formatCad(route.fares.adult * 2)}.
             </p>
           </div>
-          <div className="grid gap-2">
-            <ButtonLink href={`/book?route=${route.slug}`} size="lg">
-              See today&apos;s departures
+          <div>
+            <ButtonLink href={`/book?route=${route.slug}`} size="lg" className="w-full">
+              Book — {formatCad(route.fares.adult)}
             </ButtonLink>
-            <ButtonLink href={`/routes/${route.slug}`} variant="outline" size="md">
-              Full timetable
-            </ButtonLink>
+            <Link
+              href={`/routes/${route.slug}`}
+              className="mt-3 inline-block py-1 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline"
+            >
+              Full timetable →
+            </Link>
           </div>
         </div>
       </div>

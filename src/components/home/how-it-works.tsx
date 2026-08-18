@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SectionHeading } from "@/components/ui/section";
 import { ButtonLink } from "@/components/ui/button";
 
@@ -68,13 +69,19 @@ export function HowItWorks() {
         ))}
       </ol>
 
-      <div className="mt-10 flex flex-wrap items-center gap-4">
+      {/* One action. "Where to find us" was an outline button of equal
+          weight beside the purchase; it is a text link now, and the buy
+          button carries the same label as every other buy button. */}
+      <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
         <ButtonLink href="/book?to=moraine-lake" size="lg">
-          See today&apos;s departures
+          Book a seat
         </ButtonLink>
-        <ButtonLink href="/stops" variant="outline" size="lg">
-          Where to find us
-        </ButtonLink>
+        <Link
+          href="/stops"
+          className="py-1 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline"
+        >
+          Where to find us →
+        </Link>
       </div>
     </div>
   );
