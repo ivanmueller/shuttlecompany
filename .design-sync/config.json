@@ -1,0 +1,56 @@
+{
+  "pkg": "shuttlecompany",
+  "globalName": "LarchLine",
+  "shape": "package",
+  "srcDir": "src/components",
+  "tsconfig": ".design-sync/tsconfig.sync.json",
+  "buildCmd": "node .design-sync/prepare.mjs",
+  "cssEntry": ".design-sync/.cache/styles.compiled.css",
+  "extraFonts": [
+    ".design-sync/fonts/fonts.css"
+  ],
+  "componentSrcMap": {
+    "legalMetadata": null
+  },
+  "extraEntries": [
+    "./src/data/network.ts",
+    "./src/data/faqs.ts",
+    "./src/data/landing-pages.ts",
+    "./src/data/comparison.ts",
+    "./src/lib/utils.ts",
+    "./src/lib/season.ts"
+  ],
+  "overrides": {
+    "StickyBookBar": {
+      "cardMode": "single",
+      "primaryStory": "ShownOnAPhone",
+      "viewport": "390x460"
+    },
+    "ComparisonTable": {
+      "cardMode": "column"
+    },
+    "SearchWidget": {
+      "cardMode": "column"
+    },
+    "HeroPlanner": {
+      "cardMode": "column"
+    },
+    "Credentials": {
+      "cardMode": "column"
+    },
+    "HeaderNav": {
+      "cardMode": "single",
+      "primaryStory": "Default",
+      "viewport": "1280x220"
+    },
+    "SiteHeader": {
+      "cardMode": "single",
+      "primaryStory": "Default",
+      "viewport": "1280x300"
+    },
+    "Timetable": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

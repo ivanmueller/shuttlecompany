@@ -1,0 +1,28 @@
+/* Sync-only tsconfig, read by the design-sync converter's esbuild resolver.
+
+   It mirrors the repo tsconfig's @/* alias and additionally rebinds three
+   next/* modules plus @/config/site, because preview cards and the designs
+   Claude Design generates render outside a Next.js app router, where the real
+   modules throw and `process` does not exist. Component source is never
+   edited — only module resolution changes.
+
+   Two ordering/syntax rules this file must keep:
+   - "@/config/site" MUST stay above the "@/*" wildcard. The resolver returns
+     the first matching rule, so the wildcard would otherwise win and the
+     process shim would never load.
+   - Use /* *​/ comments only. The resolver strips // line comments with a
+     regex that corrupts a "//" JSON key, which silently disables every path
+     mapping (and is very hard to spot: the build still succeeds). */
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": "..",
+    "paths": {
+      "next/link": ["./.design-sync/shims/next-link"],
+      "next/image": ["./.design-sync/shims/next-image"],
+      "next/navigation": ["./.design-sync/shims/next-navigation"],
+      "@/config/site": ["./.design-sync/shims/site"],
+      "@/*": ["./src/*"]
+    }
+  }
+}
