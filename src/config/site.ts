@@ -143,7 +143,25 @@ export const site = {
    *
    * See docs/BRAND.md §8 for what the photograph should actually be of.
    */
-  heroPhoto: null as null | {
+  heroPhoto: {
+    /** Lake Louise lakeshore and boathouse — Route 3's destination.
+     *  Upload the file to `public/` under exactly this name; see
+     *  `public/README.md`. Until it exists the hero falls back to the drawn
+     *  AlpineScene rather than rendering a broken image. */
+    src: "/hero-lake-louise.jpg",
+    /** Empty on purpose. The photograph sits behind a scrim under an <h1>
+     *  that already names the destination, so it is decorative in the WCAG
+     *  sense and an alt string here is noise in a screen reader. */
+    alt: "",
+    /** The hero is far wider than tall, so a 3:2 source is cropped
+     *  vertically and the Y value is the one doing the work. 35% keeps the
+     *  ridgeline and the boathouse band and crops the busy foreground out
+     *  from under the four-stat row. */
+    focus: "50% 35%",
+    /** Renders in the footer fine print. Set it if the licence asks for
+     *  attribution; null for a photograph the company owns outright. */
+    credit: null,
+  } as null | {
     src: string;
     alt: string;
     focus: string;

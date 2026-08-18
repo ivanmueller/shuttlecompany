@@ -268,10 +268,17 @@ composite into the brand rather than sitting on top of it.
 
 ## 8. The hero photograph
 
-Set `site.heroPhoto` and the hero swaps from the drawn scene to a photograph.
-Nothing else changes — same scrim, same headline treatment, same LCP handling
+`site.heroPhoto` is already pointed at `/hero-lake-louise.jpg`. **Upload a file
+to `public/` under that name and the hero swaps** — no config edit, no
+component edit, same scrim, same headline treatment, same LCP handling
 (`preload` + `sizes="100vw"`, so phones get a phone-width frame over park LTE
-rather than a 3840px one).
+rather than a 3840px one). Specs are in `public/README.md`.
+
+Until that file exists — or if it ever 404s in production — the hero falls
+back to the drawn `AlpineScene` rather than rendering a hole. That fallback is
+the reason the config can safely name a file before the file is uploaded, and
+it is worth keeping: `public/` assets are uploaded by hand, and a missing hero
+is invisible in a build log and obvious to a visitor.
 
 ### What the photograph is for
 
