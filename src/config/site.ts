@@ -87,18 +87,62 @@ export const site = {
   },
 
   /**
-   * Social proof. These are placeholders — replace with real, verifiable
-   * numbers before launch. Do not publish a rating you cannot substantiate;
-   * fabricated review counts in JSON-LD are a manual-action risk in Search
-   * and a consumer-protection risk in Canada.
+   * Verifiable operating facts only.
+   *
+   * Nothing here may be a number we cannot substantiate on request. Ratings,
+   * review counts and on-time percentages were removed rather than guarded by
+   * a flag: a fabricated figure in the source is a figure that eventually
+   * ships. Re-add them under `reviews` once they are real and syndicated.
    */
   proof: {
-    ratingValue: 4.9,
-    reviewCount: 1284,
-    passengersServed: "120,000+",
-    onTimeRate: "98.6%",
-    verified: false as const,
+    /** Free spaces held at the Gondola Park & Ride. Countable. */
+    parkingSpaces: 600,
+    /** Set once reviews exist and are syndicated. Until then the home page
+     *  carries operator credentials instead of stars, and `schema.ts` emits
+     *  no aggregateRating. */
+    reviews: null as null | { ratingValue: number; reviewCount: number },
   },
+
+  /**
+   * Regulatory credentials.
+   *
+   * Each renders only when set, so the site never claims a licence it does
+   * not hold. Fill these in from the actual certificates before launch —
+   * for a new operator these do more work than a star rating would.
+   */
+  credentials: {
+    /** Alberta / NSC safety fitness certificate number. */
+    nscNumber: null as string | null,
+    /** Parks Canada business licence for commercial operation in the park. */
+    parksCanadaLicence: null as string | null,
+    /** Public liability cover, in CAD. */
+    liabilityCoverCad: null as number | null,
+    /** Named accountable person. A face and a name outperform a badge. */
+    operatorName: null as string | null,
+  },
+
+  /**
+   * The seat guarantee.
+   *
+   * The category's real fear is not losing $29, it is losing the one day the
+   * visitor has at Moraine Lake. This is the promise that answers it, and it
+   * is one neither Parks Canada nor Roam can structurally match. With
+   * 20-minute headways the payout is rare; price it as marketing.
+   */
+  guarantee: {
+    windowMinutes: 30,
+  },
+
+  /**
+   * Whether seat counts come from real inventory.
+   *
+   * While false, every availability display degrades to a qualitative state
+   * and no numeric "only N seats left" is rendered anywhere. Flip it when the
+   * booking backend exists — not before. A scarcity claim you cannot
+   * substantiate is a Competition Act s.74.01 exposure and, for a challenger
+   * selling honesty, a worse trade than the urgency is worth.
+   */
+  inventoryIsLive: false as boolean,
 
   /** Competitor fares used for honest price comparison. Verify before launch
    *  and re-check each season — stale competitor pricing is a legal risk. */

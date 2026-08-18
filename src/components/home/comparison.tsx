@@ -1,5 +1,6 @@
 import { comparisonRows, comparisonColumns } from "@/data/comparison";
 import { SectionHeading } from "@/components/ui/section";
+import { ButtonLink } from "@/components/ui/button";
 import { site } from "@/config/site";
 
 /**
@@ -23,9 +24,11 @@ export function ComparisonTable() {
         lede="Parks Canada is the cheapest way to reach Moraine Lake, if you can get a seat. Most visitors cannot. Here is the honest version."
       />
 
-      {/* Desktop: a real table. */}
-      <div className="mt-12 hidden overflow-x-auto rounded-[var(--radius)] border border-line md:block">
-        <table className="w-full min-w-[52rem] border-collapse text-sm">
+      {/* One DOM, two layouts. See `.reflow-table` in globals.css: this used
+          to render a desktop table *and* a stacked card list into every
+          response, with one of them hidden. */}
+      <div className="mt-12 overflow-x-auto md:rounded-[var(--radius)] md:border md:border-line">
+        <table className="reflow-table w-full border-collapse text-sm md:min-w-[52rem]">
           <caption className="sr-only">
             Comparison of {site.name} with the Parks Canada shuttle, Roam Transit and
             Moraine Lake Bus Company
@@ -55,7 +58,7 @@ export function ComparisonTable() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody className="md:divide-y md:divide-line">
             {comparisonRows.map((row) => (
               <tr key={row.criterion} className="align-top">
                 <th scope="row" className="bg-sunken/50 px-5 py-4 text-left">
@@ -73,6 +76,8 @@ export function ComparisonTable() {
                   return (
                     <td
                       key={col.key}
+                      data-label={col.label}
+                      data-us={col.us ? "true" : undefined}
                       className={`px-5 py-4 leading-relaxed ${
                         col.us
                           ? "bg-brand-50/60 font-medium text-ink"
@@ -106,49 +111,6 @@ export function ComparisonTable() {
         </table>
       </div>
 
-      {/* Mobile: stacked cards. A 5-column table on a phone is unreadable and
-          people simply leave. */}
-      <ul className="mt-10 space-y-4 md:hidden">
-        {comparisonRows.map((row) => (
-          <li
-            key={row.criterion}
-            className="overflow-hidden rounded-[var(--radius)] border border-line"
-          >
-            <div className="border-b border-line bg-sunken px-4 py-3">
-              <h3 className="font-sans text-[0.9375rem] font-bold text-ink">
-                {row.criterion}
-              </h3>
-              {row.detail && (
-                <p className="mt-1 text-xs leading-relaxed text-ink-subtle">{row.detail}</p>
-              )}
-            </div>
-            <dl className="divide-y divide-line text-sm">
-              {comparisonColumns.map((col) => (
-                <div
-                  key={col.key}
-                  className={`px-4 py-3 ${col.us ? "bg-brand-50/70" : ""}`}
-                >
-                  <dt
-                    className={`text-[0.6875rem] font-bold uppercase tracking-[0.1em] ${
-                      col.us ? "text-brand-700" : "text-ink-subtle"
-                    }`}
-                  >
-                    {col.label}
-                  </dt>
-                  <dd
-                    className={`mt-1 leading-relaxed ${
-                      col.us ? "font-medium text-ink" : "text-ink-muted"
-                    }`}
-                  >
-                    {row[col.key]}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </li>
-        ))}
-      </ul>
-
       <p className="mt-6 text-xs leading-relaxed text-ink-subtle">
         Competitor details verified {site.benchmarks.checkedOn} from each operator&apos;s
         public website and re-checked each season. Fares exclude the Parks Canada park
@@ -156,6 +118,15 @@ export function ComparisonTable() {
         {site.name} is not affiliated with Parks Canada, Roam Transit or Moraine Lake Bus
         Company.
       </p>
+
+      {/* A real call to action at the end of the argument. This section used
+          to finish on a substantiation footnote and hand straight over to the
+          next heading, at one of the two highest-intent moments on the page. */}
+      <div className="mt-8">
+        <ButtonLink href="/book?to=moraine-lake" size="lg">
+          See today&apos;s seats to Moraine Lake
+        </ButtonLink>
+      </div>
     </div>
   );
 }

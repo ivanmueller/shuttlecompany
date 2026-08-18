@@ -3,84 +3,134 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/home/hero";
 import { TrustStrip } from "@/components/home/trust-strip";
 import { ComparisonTable } from "@/components/home/comparison";
+import { QuickComparison } from "@/components/home/quick-comparison";
 import { HowItWorks } from "@/components/home/how-it-works";
-import { DepartureBoard, type BoardRow } from "@/components/home/departure-board";
-import { RouteCard } from "@/components/routes/route-card";
+import { Credentials } from "@/components/home/credentials";
+import { ClosingCta } from "@/components/home/closing-cta";
+import { type BoardRow, type BoardFilter } from "@/components/home/departure-board";
+import { RouteCard, FlagshipRouteCard } from "@/components/routes/route-card";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { ButtonLink } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { routes, getDepartures, stopById, totalDailyDepartures } from "@/data/network";
-import { featuredFaqs } from "@/data/faqs";
+import {
+  routes,
+  routeBySlug,
+  getDepartures,
+  stopById,
+  totalDailyDepartures,
+} from "@/data/network";
+import { featuredFaqs, faqs } from "@/data/faqs";
 import { faqSchema, routeListSchema } from "@/lib/schema";
 import { site } from "@/config/site";
 import { todayISO, formatDateShort } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: `${site.name} — Moraine Lake & Lake Louise Shuttle | No Reservation Needed`,
-  description: `Shuttles to Moraine Lake and Lake Louise every 15–30 minutes. Seats released daily, so you can travel even if the Parks Canada shuttle and Roam Transit are sold out. Free parking, open return times, from $12.`,
+  title: `${site.name} — Moraine Lake & Lake Louise Shuttle | Seats Released Daily`,
+  description: `Scheduled buses to Moraine Lake every 20 minutes and Lake Louise every 15. Seats released daily, so you can still travel when the Parks Canada shuttle and Roam Transit are sold out. $29 round trip, free parking, open return.`,
   alternates: { canonical: "/" },
 };
 
 /** Re-render every 10 minutes so the departure board and availability stay
- *  current without rebuilding the whole site. */
+ *  current without rebuilding the whole site. The board additionally refines
+ *  against the visitor's own clock on mount. */
 export const revalidate = 600;
+
+/** Park-time minute at render. Passed to the board so the first paint is
+ *  roughly right — the server used to emit the whole day, so an afternoon
+ *  visitor's first paint was six pre-dawn sunrise departures. */
+function parkNowMinutes(): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Edmonton",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  return h * 60 + m;
+}
 
 export default function HomePage() {
   const today = todayISO();
+  const now = parkNowMinutes();
+  const flagship = routeBySlug("moraine-lake-express");
+  const secondary = routes.filter((r) => r.slug !== "moraine-lake-express");
 
-  /* Merge every route's departures into one chronological board. */
+  /* Board rows. Only what is plausibly still ahead ships in the HTML — the
+     whole day used to be serialised to render eight rows. */
   const boardRows: BoardRow[] = routes
     .flatMap((route) =>
-      getDepartures(route, today).map((d) => ({
-        routeNumber: route.number,
-        routeName: route.name,
-        routeSlug: route.slug,
-        destination: stopById(route.destinationId).shortName,
-        minutes: d.minutes,
-        time: d.time,
-        label: d.label,
-        seatsRemaining: d.seatsRemaining,
-        capacity: route.capacity,
-      })),
+      getDepartures(route, today)
+        .filter((d) => d.minutes >= now - 5)
+        .map((d) => ({
+          routeNumber: route.number,
+          routeName: route.name,
+          routeSlug: route.slug,
+          destination: stopById(route.destinationId).shortName,
+          destinationId: route.destinationId,
+          minutes: d.minutes,
+          time: d.time,
+          label: d.label,
+          seatsRemaining: d.seatsRemaining,
+          availability: d.availability,
+          capacity: route.capacity,
+          fare: route.fares.adult,
+        })),
     )
     .sort((a, b) => a.minutes - b.minutes);
+
+  /* Moraine Lake first, because that is what people came for. The board used
+     to merge every route chronologically, which made it 38% lakeshore. */
+  const filters: BoardFilter[] = [
+    { id: "moraine-lake", label: "Moraine Lake" },
+    { id: "ll-lakeshore", label: "Lake Louise" },
+    { id: "ll-village", label: "Village & Banff" },
+    { id: "all", label: "Everything" },
+  ];
 
   return (
     <>
       <JsonLd data={routeListSchema()} />
       <JsonLd data={faqSchema(featuredFaqs)} />
 
-      <Hero />
+      <Hero
+        rows={boardRows}
+        dateISO={today}
+        dateLabel={formatDateShort(today)}
+        filters={filters}
+        serverNowMinutes={now}
+      />
+
+      {/* The comparison, compressed, directly under the hero — it answers the
+          question that brought the visitor and the full table is six screens
+          further down than most people scroll. */}
+      <Section tone="sunken">
+        <QuickComparison />
+      </Section>
+
       <TrustStrip />
 
-      {/* Routes + live board, side by side. The board is the proof and the
-          cards are the offer; keeping them on one screen is what turns
-          "sounds convenient" into a click. */}
+      {/* Routes. Route 1 is the business; the other four used to carry the
+          same visual weight and the same two buttons, which made the visitor
+          work to find the thing they already came for. */}
       <Section>
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
-          <div>
-            <SectionHeading
-              align="left"
-              eyebrow={`${routes.length} routes · ${totalDailyDepartures()} departures a day`}
-              title="Pick your route"
-              lede="Scheduled service, not a tour. Turn up, board, and go — the next bus is never more than half an hour away on any core route."
-            />
-            <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              {routes.map((route) => (
-                <RouteCard key={route.id} route={route} />
-              ))}
-            </div>
-          </div>
-
-          <aside className="lg:sticky lg:top-28 lg:self-start">
-            <DepartureBoard rows={boardRows} dateLabel={formatDateShort(today)} />
-            <p className="mt-4 text-xs leading-relaxed text-ink-subtle">
-              Seat counts update continuously. A departure showing four seats or fewer
-              has typically sold out within the hour during July and August.
-            </p>
-          </aside>
+        <SectionHeading
+          align="left"
+          eyebrow={`${routes.length} routes · ${totalDailyDepartures()} departures a day`}
+          title="Pick your route"
+          lede="Scheduled service, not a tour. Turn up, board, and go — the next bus is never more than half an hour away on any core route."
+        />
+        {flagship && <FlagshipRouteCard route={flagship} className="mt-10" />}
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {secondary.map((route) => (
+            <RouteCard key={route.id} route={route} />
+          ))}
         </div>
+      </Section>
+
+      <Section>
+        <HowItWorks />
       </Section>
 
       <Section tone="sunken">
@@ -88,12 +138,42 @@ export default function HomePage() {
       </Section>
 
       <Section>
-        <HowItWorks />
+        <Credentials />
       </Section>
 
-      {/* Destination guides. These exist for search as much as for riders —
-          internal links to the keyword pages from a high-authority position. */}
       <Section tone="sunken">
+        <div className="grid gap-12 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-16">
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <SectionHeading
+              align="left"
+              eyebrow="Before you book"
+              title="The questions everyone asks"
+              lede="Parking, pets, park passes, and what happens when the road closes."
+            />
+            {/* The only button here used to be an exit to /faq, at the exact
+                moment a reader has stopped objecting. */}
+            <ButtonLink href="/book" size="lg" className="mt-6">
+              Book a seat
+            </ButtonLink>
+            <Link
+              href="/faq"
+              className="mt-4 inline-block py-1 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline"
+            >
+              Read all {faqs.length} answers →
+            </Link>
+          </div>
+          <FaqAccordion items={featuredFaqs} />
+        </div>
+      </Section>
+
+      <ClosingCta />
+
+      {/* Destination guides. These exist for search as much as for riders, and
+          they sit below the close: six links out of the funnel, placed at the
+          point of highest intent, is six invitations to leave. Internal links
+          pass equity from any position, and the footer carries every one of
+          them on every page. */}
+      <Section>
         <SectionHeading
           eyebrow="Planning your day"
           title="Everything you need to know before you go"
@@ -153,52 +233,6 @@ export default function HomePage() {
           ))}
         </div>
       </Section>
-
-      <Section>
-        <div className="grid gap-12 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-16">
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <SectionHeading
-              align="left"
-              eyebrow="Before you book"
-              title="The questions everyone asks"
-              lede="The full list runs to thirty answers, covering parking, pets, park passes and what happens when the road closes."
-            />
-            <ButtonLink href="/faq" variant="outline" size="md" className="mt-6">
-              Read all {featuredFaqs.length > 0 ? "30+" : ""} answers
-            </ButtonLink>
-          </div>
-          <FaqAccordion items={featuredFaqs} />
-        </div>
-      </Section>
-
-      {/* Closing CTA. */}
-      <section className="relative isolate overflow-hidden bg-brand-900 py-20 text-white md:py-28">
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,var(--brand-700),transparent_60%)]"
-        />
-        <div className="container-page relative text-center">
-          <h2 className="mx-auto max-w-2xl text-3xl font-bold md:text-[2.75rem] md:leading-[1.1]">
-            The next bus to Moraine Lake leaves in under twenty minutes
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-white/75">
-            No reservation window, no waiting list, no fixed return time. Pick a
-            departure and go.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-            <ButtonLink href="/book" size="lg">
-              Book a seat
-            </ButtonLink>
-            <ButtonLink href="/routes" variant="quiet" size="lg">
-              See all timetables
-            </ButtonLink>
-          </div>
-          <p className="mt-6 text-sm text-white/60">
-            Free changes up to 2 hours before departure · No booking fee · Season{" "}
-            {site.season.label}
-          </p>
-        </div>
-      </section>
     </>
   );
 }

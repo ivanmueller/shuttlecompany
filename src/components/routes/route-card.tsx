@@ -8,7 +8,7 @@ import {
 } from "@/data/network";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
-import { formatCad } from "@/lib/utils";
+import { cn, formatCad } from "@/lib/utils";
 import { site } from "@/config/site";
 
 /**
@@ -48,13 +48,13 @@ export function RouteCard({ route }: { route: Route }) {
           <p className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
             Route {route.number}
             {route.popular && (
-              <span className="ml-2 rounded-full bg-accent-500/20 px-2 py-0.5 text-[0.625rem] text-accent-700">
+              <span className="ml-2 rounded-full bg-accent-400 px-2 py-0.5 text-[0.625rem] font-bold text-ink">
                 Most booked
               </span>
             )}
           </p>
           <h3 className="mt-1 truncate font-sans text-[1.0625rem] font-bold leading-tight text-ink">
-            <Link href={`/routes/${route.slug}`} className="hover:text-brand-700">
+            <Link href={`/routes/${route.slug}`} className="inline-block py-0.5 hover:text-brand-700">
               {route.name}
             </Link>
           </h3>
@@ -123,7 +123,10 @@ export function RouteCard({ route }: { route: Route }) {
               href={`/book?route=${route.slug}`}
               size="md"
             >
-              Book Route {route.number}
+              {/* "Book Route 4" names our internal identifier. This names
+                  what the visitor gets, and carries the fare advantage into
+                  the label itself. */}
+              Book — {formatCad(route.fares.adult)}
             </ButtonLink>
             <ButtonLink
               href={`/routes/${route.slug}`}
@@ -131,6 +134,96 @@ export function RouteCard({ route }: { route: Route }) {
               size="md"
             >
               Timetable
+            </ButtonLink>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * Flagship route card.
+ *
+ * Five routes rendered as equals, ordered by route number, with two buttons
+ * each — ten near-identical calls to action in one section. Route 1 to
+ * Moraine Lake is almost certainly the overwhelming majority of demand and
+ * the reason anyone found this site; it had the same visual weight as the
+ * Canmore hourly.
+ *
+ * The diagnosis matters for the fix. This is not really choice overload —
+ * Scheibehenne and colleagues' 2010 meta-analysis found that effect is close
+ * to zero on average, and it shows up mainly when people have no prior
+ * preference. This visitor has one. It is a *defaults* problem: the page made
+ * them work to find the thing they already came for.
+ */
+export function FlagshipRouteCard({
+  route,
+  className,
+}: {
+  route: Route;
+  className?: string;
+}) {
+  const origin = stopById(route.originId);
+  const destination = stopById(route.destinationId);
+  const anchor = site.benchmarks.moraineLakeBusDaytime;
+
+  return (
+    <article
+      className={cn(
+        "overflow-hidden rounded-[calc(var(--radius)+0.2rem)] border-2 border-brand-800 bg-paper shadow-[var(--shadow-card)]",
+        className,
+      )}
+    >
+      <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <div className="p-6 md:p-7">
+          <p className="flex flex-wrap items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-ink-subtle">
+            Route {route.number}
+            <span className="rounded-full bg-accent-400 px-2 py-0.5 text-[0.625rem] font-bold text-ink">
+              Most booked
+            </span>
+            <StatusPill status={route.status} size="sm" />
+          </p>
+          <h3 className="mt-2 font-sans text-2xl font-bold leading-tight text-ink">
+            <Link href={`/routes/${route.slug}`} className="inline-block py-0.5 hover:text-brand-700">
+              {route.name}
+            </Link>
+          </h3>
+          <p className="mt-3 font-display text-[1.75rem] font-bold leading-none text-brand-800">
+            {headwayLabel(route)}
+          </p>
+          <p className="mt-2 text-[0.9375rem] text-ink-muted tabular">
+            {dailyDepartureCount(route)} departures daily · {serviceWindowLabel(route)} ·{" "}
+            {origin.shortName} to {destination.shortName} in {route.durationMinutes} min
+          </p>
+          <p className="mt-4 max-w-lg text-[0.9375rem] leading-relaxed text-ink-muted">
+            {route.summary}
+          </p>
+        </div>
+
+        <div className="flex flex-col justify-center gap-4 border-t border-line bg-sunken p-6 md:border-l md:border-t-0 md:p-7">
+          <div>
+            <p className="flex items-baseline gap-2">
+              <span className="font-display text-[2.25rem] font-bold leading-none text-ink">
+                {formatCad(route.fares.adult)}
+              </span>
+              {/* Attributed, not a strikethrough. A struck-through competitor
+                  price reads as our own former price, which is an ordinary-
+                  selling-price claim we cannot substantiate. */}
+              <span className="text-sm text-ink-subtle">round trip</span>
+            </p>
+            <p className="mt-1.5 text-[0.875rem] leading-relaxed text-ink-muted">
+              Moraine Lake Bus Company charges {formatCad(anchor)} for the same run.
+              Under 6 travel free — two adults and two small children is{" "}
+              {formatCad(route.fares.adult * 2)}.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <ButtonLink href={`/book?route=${route.slug}`} size="lg">
+              See today&apos;s departures
+            </ButtonLink>
+            <ButtonLink href={`/routes/${route.slug}`} variant="outline" size="md">
+              Full timetable
             </ButtonLink>
           </div>
         </div>

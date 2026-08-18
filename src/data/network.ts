@@ -293,7 +293,6 @@ export const routes: Route[] = [
         note: "Lake Louise lots fill early and Moraine Lake Road is closed to personal vehicles entirely.",
       },
     ],
-    popular: true,
   },
   {
     id: "r5",
@@ -347,6 +346,8 @@ export interface Departure {
   label: string;
   arrivalLabel: string;
   seatsRemaining: number;
+  /** Qualitative state. Prefer this over `seatsRemaining` in any UI. */
+  availability: Availability;
   status: ServiceStatus;
 }
 
@@ -370,8 +371,10 @@ export const formatMinutesLabel = (minutes: number): string => {
  * would jump while a rider is looking at them. A hash of route + date + time
  * gives realistic-looking, stable availability without a database.
  *
- * Replace `seatsRemaining` with a live inventory call when the booking
- * backend exists — the display components already treat it as untrusted.
+ * IMPORTANT: this is a *demand model*, not inventory. While
+ * `site.inventoryIsLive` is false, nothing derived from it may be shown as a
+ * number — see `availabilityOf` below. Replace this with a live inventory
+ * call when the booking backend exists.
  */
 const hash01 = (input: string): number => {
   let h = 2166136261;
@@ -397,6 +400,30 @@ const demandFactor = (minutes: number): number => {
   return 0.2;
 };
 
+/**
+ * Qualitative availability.
+ *
+ * The rules, in order of how much they matter:
+ *
+ *  1. "sold-out" and "limited" are the only states that carry urgency, so
+ *     they are the only ones allowed to be wrong at anyone's expense. While
+ *     inventory is not live we never render a seat *count* — a screenshot of
+ *     "Only 3 seats left" that never changes costs more than the urgency
+ *     earns, and s.74.01 of the Competition Act applies to it.
+ *  2. Amber is the alarm colour everywhere else on this site. It is reserved
+ *     for `limited` (four or fewer). Five to eight seats on a 24-seat coach
+ *     is a healthy bus, not a warning, and a signal that fires on a seventh
+ *     of all rows stops being a signal.
+ */
+export type Availability = "sold-out" | "limited" | "available" | "wide-open";
+
+export const availabilityOf = (seats: number, capacity: number): Availability => {
+  if (seats <= 0) return "sold-out";
+  if (seats <= 4) return "limited";
+  if (seats >= capacity * 0.6) return "wide-open";
+  return "available";
+};
+
 export const getDepartures = (route: Route, dateISO: string): Departure[] => {
   const out: Departure[] = [];
   for (let m = route.firstDeparture; m <= route.lastDeparture; m += route.headwayMinutes) {
@@ -406,11 +433,11 @@ export const getDepartures = (route: Route, dateISO: string): Departure[] => {
       Math.round(route.capacity * demandFactor(m) * (0.55 + seed * 0.75)),
     );
     const seatsRemaining = Math.max(0, route.capacity - taken);
+    const availability = availabilityOf(seatsRemaining, route.capacity);
 
     let status: ServiceStatus = route.status;
-    if (seatsRemaining === 0) status = "issue";
-    else if (seatsRemaining <= 4) status = "delay";
-    else if (route.status === "ontime") status = "ontime";
+    if (availability === "sold-out") status = "issue";
+    else if (availability === "limited") status = "delay";
 
     out.push({
       minutes: m,
@@ -418,11 +445,24 @@ export const getDepartures = (route: Route, dateISO: string): Departure[] => {
       label: formatMinutesLabel(m),
       arrivalLabel: formatMinutesLabel(m + route.durationMinutes),
       seatsRemaining,
+      availability,
       status,
     });
   }
   return out;
 };
+
+/**
+ * The next departure at or after `nowMinutes`, or null once service has
+ * finished for the day. This is what the live countdown reads — one source,
+ * so the hero, the sticky bar and the closing CTA can never disagree.
+ */
+export const nextDeparture = (
+  route: Route,
+  dateISO: string,
+  nowMinutes: number,
+): Departure | null =>
+  getDepartures(route, dateISO).find((d) => d.minutes >= nowMinutes) ?? null;
 
 export const dailyDepartureCount = (route: Route): number =>
   Math.floor((route.lastDeparture - route.firstDeparture) / route.headwayMinutes) + 1;
@@ -501,4 +541,137 @@ export const segmentMinutes = (match: RouteMatch): number => {
   const legs = Math.abs(match.toIndex - match.fromIndex);
   const totalLegs = match.route.stopIds.length - 1;
   return Math.round((match.route.durationMinutes * legs) / totalLegs);
+};
+
+/* -------------------------------------------------------------------------- */
+/* Connections                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A bookable itinerary: one leg, or two with a transfer.
+ *
+ * This exists because the old model — "a destination is reachable if it
+ * shares a single route with the origin" — silently deleted the company's
+ * headline product for its most valuable segment. From Banff Downtown and
+ * from Canmore, `destinationsFrom()` did not return Moraine Lake at all, so a
+ * visitor with no car staying in Banff could not express the trip the whole
+ * business exists to sell.
+ *
+ * Every route on this network touches Lake Louise Village, so a single
+ * transfer connects any origin to any destination. The planner finds it.
+ */
+export interface Journey {
+  legs: RouteMatch[];
+  /** Stop id of the transfer, when there is one. */
+  viaStopId?: string;
+  /** Riding time, excluding the transfer wait. */
+  rideMinutes: number;
+  /** Allowance for the transfer, so quoted totals are not optimistic. */
+  transferMinutes: number;
+  totalMinutes: number;
+  /** Sum of adult fares across the legs. */
+  adultFare: number;
+}
+
+/** Slack quoted for a transfer. Half the connecting route's headway, so the
+ *  number reflects the actual service rather than a flat guess. */
+const transferAllowance = (onward: Route): number =>
+  Math.round(onward.headwayMinutes / 2);
+
+const directJourney = (match: RouteMatch): Journey => ({
+  legs: [match],
+  rideMinutes: segmentMinutes(match),
+  transferMinutes: 0,
+  totalMinutes: segmentMinutes(match),
+  adultFare: match.route.fares.adult,
+});
+
+/**
+ * Every itinerary from origin to destination, best first.
+ *
+ * Direct services sort ahead of connections; within each group, faster first.
+ * Returns an empty array only when the two stops genuinely cannot be
+ * connected in two legs — which, on this network, never happens.
+ */
+export const planJourneys = (originId: string, destinationId: string): Journey[] => {
+  if (originId === destinationId) return [];
+
+  const direct = findRoutes(originId, destinationId).map(directJourney);
+
+  const connections: Journey[] = [];
+  for (const first of routes) {
+    const a = first.stopIds.indexOf(originId);
+    if (a === -1) continue;
+    for (const second of routes) {
+      if (second.id === first.id) continue;
+      const d = second.stopIds.indexOf(destinationId);
+      if (d === -1) continue;
+
+      /* Any stop both routes touch is a candidate transfer point. */
+      for (const via of first.stopIds) {
+        if (via === originId || via === destinationId) continue;
+        if (!second.stopIds.includes(via)) continue;
+
+        const legA = findRoutes(originId, via).find((m) => m.route.id === first.id);
+        const legB = findRoutes(via, destinationId).find((m) => m.route.id === second.id);
+        if (!legA || !legB) continue;
+
+        const ride = segmentMinutes(legA) + segmentMinutes(legB);
+        const wait = transferAllowance(second);
+        connections.push({
+          legs: [legA, legB],
+          viaStopId: via,
+          rideMinutes: ride,
+          transferMinutes: wait,
+          totalMinutes: ride + wait,
+          adultFare: legA.route.fares.adult + legB.route.fares.adult,
+        });
+      }
+    }
+  }
+
+  /* Keep the best itinerary per transfer point rather than every permutation. */
+  const bestPerVia = new Map<string, Journey>();
+  for (const j of connections) {
+    const key = `${j.viaStopId}`;
+    const held = bestPerVia.get(key);
+    if (!held || j.totalMinutes < held.totalMinutes) bestPerVia.set(key, j);
+  }
+
+  return [
+    ...direct.sort((x, y) => x.totalMinutes - y.totalMinutes),
+    ...[...bestPerVia.values()].sort((x, y) => x.totalMinutes - y.totalMinutes),
+  ];
+};
+
+/** Every stop a rider can actually reach from here, directly or with one
+ *  transfer. This is what the destination select is built from. */
+export const reachableStopIds = (originId: string): string[] =>
+  servedStopIds().filter(
+    (id) => id !== originId && planJourneys(originId, id).length > 0,
+  );
+
+/* -------------------------------------------------------------------------- */
+/* Service status                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The network's worst current status, and the routes responsible.
+ *
+ * The header banner is derived from this rather than hard-coded. A banner
+ * that always reads "all routes on schedule" is decoration; one that
+ * occasionally names a problem is the reason riders trust transit displays at
+ * all — and it cannot contradict the amber pill on a route card further down
+ * the same page.
+ */
+export const networkStatus = (): {
+  status: ServiceStatus;
+  affected: Route[];
+} => {
+  const affected = routes.filter((r) => r.status !== "ontime");
+  if (affected.length === 0) return { status: "ontime", affected: [] };
+  const status: ServiceStatus = affected.some((r) => r.status === "issue")
+    ? "issue"
+    : "delay";
+  return { status, affected };
 };

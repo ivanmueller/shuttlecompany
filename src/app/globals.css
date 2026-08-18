@@ -70,9 +70,16 @@
   --paper-raised: #ffffff;
   --ink: #16181c;
   --ink-muted: #5a6069;
-  --ink-subtle: #7c838d;
+  --ink-subtle: #5f6871; /* 5.4:1 on paper. Was #7c838d — 3.82:1, which
+                            failed WCAG AA on 58 nodes including every label
+                            on the booking form, and is unreadable outdoors. */
   --line: #e3e2df;
   --line-strong: #cfcecb;
+
+  --focus-ring: #1d3b47;
+  --focus-halo: rgb(245 196 81 / 0.9);
+  --focus-ring-dark: #ffffff;
+  --focus-halo-dark: rgb(20 30 36 / 0.85);
 
   --radius: 0.625rem;
   --shadow-card: 0 1px 2px rgb(22 24 28 / 0.05), 0 4px 16px -8px rgb(22 24 28 / 0.12);
@@ -175,11 +182,24 @@
     text-wrap: pretty;
   }
 
-  /* One visible, consistent focus treatment. Conversion killer if missing. */
+  /* One visible, consistent focus treatment. Conversion killer if missing.
+     Two-tone on purpose: a single brand-coloured ring measured 2.25:1 against
+     the departure board and 1.72:1 against the hero, so keyboard focus was
+     invisible on exactly the dark surfaces that carry the booking links.
+     WCAG 2.2 SC 1.4.11 wants 3:1. The dark core plus light halo clears it on
+     any ground, which is why browsers ship the same trick. */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--brand-600);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--focus-halo);
     border-radius: 4px;
+  }
+
+  /* On dark sections the ring and halo swap roles. */
+  .on-dark :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+  :where(.on-dark):focus-visible {
+    outline-color: var(--focus-ring-dark);
+    box-shadow: 0 0 0 4px var(--focus-halo-dark);
   }
 
   /* Native date/time inputs should not look like a different product. */
@@ -241,5 +261,63 @@
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ============================================================================
+   7. RESPONSIVE TABLE REFLOW
+   ----------------------------------------------------------------------------
+   The comparison table used to ship twice: a real <table> for desktop and a
+   stacked <ul> for phones, both in every response, one hidden by CSS. Same
+   content, paid for on both devices, and duplicated in the HTML.
+
+   One DOM now. Above `md` it is an ordinary table. Below it, each cell
+   becomes a labelled row using the column heading carried in `data-label`,
+   which is the same information a phone reader needs and none of the
+   horizontal scrolling a 4-column table would force.
+   ========================================================================== */
+@media (max-width: 767px) {
+  .reflow-table,
+  .reflow-table tbody,
+  .reflow-table tr,
+  .reflow-table th,
+  .reflow-table td {
+    display: block;
+    width: auto;
+  }
+
+  .reflow-table thead {
+    display: none;
+  }
+
+  .reflow-table tr {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .reflow-table th[scope="row"] {
+    background: var(--paper-sunken);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .reflow-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-subtle);
+    margin-bottom: 0.25rem;
+  }
+
+  .reflow-table td[data-us="true"]::before {
+    color: var(--brand-700);
+  }
+
+  .reflow-table td + td {
+    border-top: 1px solid var(--line);
   }
 }

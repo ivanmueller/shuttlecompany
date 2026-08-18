@@ -4,7 +4,9 @@ import "./globals.css";
 import { site, isProductionDeploy } from "@/config/site";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { StickyBookBar } from "@/components/layout/sticky-book-bar";
+import { StickyBookBar, type StickyDeparture } from "@/components/layout/sticky-book-bar";
+import { getDepartures, routeBySlug, stopById } from "@/data/network";
+import { todayISO } from "@/lib/utils";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationSchema, websiteSchema } from "@/lib/schema";
 
@@ -88,9 +90,33 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
+/** Today's Moraine Lake departures, for the sticky bar. Computed on the
+ *  server so the client bundle never has to carry the network dataset. */
+function stickyDepartures(): StickyDeparture[] {
+  const route = routeBySlug("moraine-lake-express");
+  if (!route) return [];
+  const destination = stopById(route.destinationId).shortName;
+  return getDepartures(route, todayISO()).map((d) => ({
+    time: d.time,
+    label: d.label,
+    minutes: d.minutes,
+    destination,
+    routeSlug: route.slug,
+    fare: route.fares.adult,
+  }));
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-CA" className={`${body.variable} ${display.variable}`}>
+    /* `scroll-behavior: smooth` is set on html in globals.css. Next 16 stopped
+         overriding it during navigation, so without this attribute every route
+         transition animates a long smooth scroll to the top instead of jumping
+         — most visibly on the home → /book handoff. */
+    <html
+      lang="en-CA"
+      data-scroll-behavior="smooth"
+      className={`${body.variable} ${display.variable}`}
+    >
       <body className="min-h-screen bg-paper antialiased">
         <a
           href="#main"
@@ -103,7 +129,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />
-        <StickyBookBar />
+        <StickyBookBar departures={stickyDepartures()} />
       </body>
     </html>
   );

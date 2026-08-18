@@ -34,7 +34,9 @@ const postalAddress = () => ({
 
 export const organizationSchema = () => ({
   "@context": "https://schema.org",
-  "@type": "TouristInformationCenter",
+  /* We are a scheduled bus operator, not a visitor centre. The entity type
+     is also the positioning: transit, not tours. */
+  "@type": ["BusCompany", "TransportationService"],
   "@id": abs("/#organization"),
   name: site.name,
   legalName: site.legalName,
@@ -57,17 +59,17 @@ export const organizationSchema = () => ({
   ],
   sameAs: [site.social.instagram, site.social.facebook],
   /**
-   * AggregateRating is deliberately omitted until `site.proof.verified` is
-   * true. Publishing a rating you cannot substantiate is a manual-action risk
-   * in Google Search and a misleading-advertising risk under the Competition
-   * Act. Flip the flag once the reviews are real and syndicated.
+   * AggregateRating is emitted only when `site.proof.reviews` holds real,
+   * substantiable numbers. Publishing a rating you cannot stand behind is a
+   * manual-action risk in Google Search and a misleading-advertising risk
+   * under the Competition Act.
    */
-  ...(site.proof.verified
+  ...(site.proof.reviews
     ? {
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: site.proof.ratingValue,
-          reviewCount: site.proof.reviewCount,
+          ratingValue: site.proof.reviews.ratingValue,
+          reviewCount: site.proof.reviews.reviewCount,
         },
       }
     : {}),

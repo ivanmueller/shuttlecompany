@@ -37,8 +37,8 @@ const items = [
     ),
   },
   {
-    title: "Free changes, real refunds",
-    body: "Change your date or time free up to 2 hours before departure. Cancel 24 hours out for a full refund, not a credit note.",
+    title: "You'll be in the right place",
+    body: "Your ticket carries a photo and a map of the exact boarding bay. Screenshot it before you go — there is no cell service at Moraine Lake. Miss your bus and the next one takes you anyway.",
     icon: (
       <>
         <path d="M20 12a8 8 0 1 1-2.34-5.66" />
@@ -50,8 +50,11 @@ const items = [
 
 export function TrustStrip() {
   return (
-    <section className="border-b border-line bg-paper py-12 md:py-14">
+    <section aria-labelledby="why-us" className="border-b border-line bg-paper py-12 md:py-14">
       <div className="container-page">
+        <h2 id="why-us" className="sr-only">
+          What is included with every booking
+        </h2>
         <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {items.map((item) => (
             <li key={item.title} className="flex gap-3.5 lg:flex-col lg:gap-3">

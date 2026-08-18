@@ -69,8 +69,8 @@ export function HowItWorks() {
       </ol>
 
       <div className="mt-10 flex flex-wrap items-center gap-4">
-        <ButtonLink href="/book" size="lg">
-          Check today&apos;s departures
+        <ButtonLink href="/book?to=moraine-lake" size="lg">
+          See today&apos;s departures
         </ButtonLink>
         <ButtonLink href="/stops" variant="outline" size="lg">
           Where to find us

@@ -76,7 +76,7 @@ export function SiteFooter() {
                 <dd>
                   <a
                     href={`tel:${site.contact.tollFree}`}
-                    className="font-semibold text-white hover:underline"
+                    className="inline-block py-1 font-semibold text-white hover:underline"
                   >
                     {site.contact.tollFreeDisplay}
                   </a>
@@ -85,7 +85,7 @@ export function SiteFooter() {
               <div className="flex gap-2">
                 <dt className="w-16 shrink-0 text-white/50">Local</dt>
                 <dd>
-                  <a href={`tel:${site.contact.phone}`} className="hover:underline">
+                  <a href={`tel:${site.contact.phone}`} className="inline-block py-1 hover:underline">
                     {site.contact.phoneDisplay}
                   </a>
                 </dd>
@@ -93,7 +93,7 @@ export function SiteFooter() {
               <div className="flex gap-2">
                 <dt className="w-16 shrink-0 text-white/50">Email</dt>
                 <dd>
-                  <a href={`mailto:${site.contact.email}`} className="hover:underline">
+                  <a href={`mailto:${site.contact.email}`} className="inline-block py-1 hover:underline">
                     {site.contact.email}
                   </a>
                 </dd>
@@ -110,7 +110,10 @@ export function SiteFooter() {
                 <ul className="mt-4 space-y-2.5 text-sm">
                   {col.links.map((link) => (
                     <li key={link.href}>
-                      <Link href={link.href} className="hover:text-white hover:underline">
+                      <Link
+                        href={link.href}
+                        className="inline-block py-1 hover:text-white hover:underline"
+                      >
                         {link.label}
                       </Link>
                     </li>
@@ -136,10 +139,21 @@ export function SiteFooter() {
               © {site.season.year} {site.legalName}. Not affiliated with Parks Canada,
               Roam Transit or Moraine Lake Bus Company.
             </p>
-            <p>
-              Licensed intra-provincial passenger carrier · Alberta Transportation ·
-              Operating authority pending
-            </p>
+            {/* This used to read "Licensed intra-provincial passenger carrier
+                · Alberta Transportation · Operating authority pending", which
+                contradicts itself inside one sentence — you cannot be a
+                licensed carrier with your authority pending — and, read
+                plainly, told a paying visitor we are not permitted to run
+                buses. Credentials now render from config only once they are
+                real, and say nothing until then. */}
+            {site.credentials.nscNumber ? (
+              <p>
+                Licensed intra-provincial passenger carrier · Alberta Transportation ·
+                NSC {site.credentials.nscNumber}
+              </p>
+            ) : (
+              <p>{site.legalName} · {site.address.locality}, {site.address.region}</p>
+            )}
           </div>
         </div>
       </div>

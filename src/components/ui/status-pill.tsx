@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import type { ServiceStatus } from "@/data/network";
+import type { Availability, ServiceStatus } from "@/data/network";
+import { site } from "@/config/site";
 
 /**
  * Transit status indicator.
@@ -68,39 +69,54 @@ export function StatusPill({
 /**
  * Seat availability, expressed the way it actually converts.
  *
- * Scarcity only works when it is true. The thresholds below map to real
- * inventory, and above 8 seats we say nothing rather than manufacturing
- * urgency — a fake "only 3 left!" on every row trains riders to ignore it.
+ * Two rules, both learned the expensive way:
+ *
+ *  1. **No numbers we cannot substantiate.** While `site.inventoryIsLive` is
+ *     false the seat counts come from a hash of route + date + time, not from
+ *     inventory. Rendering "Only 3 seats left" from that is a Competition Act
+ *     s.74.01 exposure and — worse for a challenger whose whole pitch is
+ *     honesty — a screenshot waiting to happen. Qualitative states are true
+ *     either way, so those are what ship until the backend exists.
+ *  2. **Amber means act now.** It is the alarm colour everywhere else on this
+ *     site. It used to fire at eight seats or fewer, which on a 24-seat coach
+ *     is a healthy bus and lit roughly one row in seven. A signal that common
+ *     is not a signal.
  */
 export function SeatsPill({
+  availability,
   seats,
-  capacity,
   className,
 }: {
-  seats: number;
-  capacity: number;
+  availability: Availability;
+  /** Only rendered when inventory is live. */
+  seats?: number;
   className?: string;
 }) {
-  if (seats === 0) {
+  if (availability === "sold-out") {
     return <StatusPill status="issue" label="Sold out" size="sm" className={className} />;
   }
-  if (seats <= 4) {
+
+  if (availability === "limited") {
     return (
       <StatusPill
         status="delay"
-        label={`Only ${seats} seat${seats === 1 ? "" : "s"} left`}
+        label={
+          site.inventoryIsLive && typeof seats === "number"
+            ? `Only ${seats} seat${seats === 1 ? "" : "s"} left`
+            : "Almost full"
+        }
         size="sm"
         className={className}
       />
     );
   }
-  if (seats <= 8) {
-    return (
-      <StatusPill status="delay" label={`${seats} seats left`} size="sm" className={className} />
-    );
-  }
-  if (seats >= capacity * 0.75) {
-    return <StatusPill status="ontime" label="Wide open" size="sm" className={className} />;
-  }
-  return <StatusPill status="ontime" label="Seats available" size="sm" className={className} />;
+
+  return (
+    <StatusPill
+      status="ontime"
+      label={availability === "wide-open" ? "Wide open" : "Seats available"}
+      size="sm"
+      className={className}
+    />
+  );
 }
